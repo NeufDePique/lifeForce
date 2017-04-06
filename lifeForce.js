@@ -5,6 +5,8 @@ const SCROLLING_SPEED = 42;
 const WIDTH = 42;
 const HEIGHT = 42;
 
+var ctx = null;
+
 var score;
 var lives;
 var level;
@@ -24,7 +26,12 @@ var space_ship = {rect: {}, speed: 0, weapon: {}, lvl_weapon: 0, missile: false,
 var wall = {rect: {}, type: ' ', destroyable: false};
 var walls = [[]];
 
+
+
 init = function() {
+    context = document.getElementById("cvs").getContext("2d");
+    context.width = document.getElementById("cvs").width;
+    context.height = document.getElementById("cvs").height;
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {}, exists: false, power: 0, speed: 0, friend_bul: false};
 		bullets[i] = bullet;
