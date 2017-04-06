@@ -29,13 +29,30 @@ var walls = [[]];
 
 
 init = function() {
-    context = document.getElementById("cvs").getContext("2d");
-    context.width = document.getElementById("cvs").width;
-    context.height = document.getElementById("cvs").height;
+    ctx = document.getElementById("cvs").getContext("2d");
+    ctx.width = document.getElementById("cvs").width;
+    ctx.height = document.getElementById("cvs").height;
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {}, exists: false, power: 0, speed: 0, friend_bul: false};
 		bullets[i] = bullet;
 	}
+	space_ship.rect = {x: 0, y: ctx.height, width: 40, height: 20};
+	game();
+}
+
+game = function() {
+	update(Date.now());
+	render();
+}
+
+update = function(d) {
+	
+}
+
+render = function() {
+	ctx.clearRect(0, 0, ctx.width, ctx.height);
+	ctx.fillStyle = "#FF0000";
+	ctx.fillRect(space_ship.rect.x, space_ship.rect.y, space_ship.rect.width, space_ship.rect.height);
 }
 
 window.onload = init;
