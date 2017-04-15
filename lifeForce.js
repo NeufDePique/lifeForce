@@ -42,6 +42,7 @@ init = function() {
 	document.addEventListener("keydown", keyPress);
 	document.addEventListener("keyup", keyRelease);
 
+	level = 1;
 	
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {x: 0, y: 0, width: 5, height: 5}, exists: false, power: 0, speed: 0, friend_bul: false};
@@ -105,6 +106,14 @@ update = function(d) {
 			}
 		}
 	}
+	
+	for(i = 0; i <= foes[level - 1].length - 1; i++) {
+		if (collides(space_ship, foes[level - 1][i]) {
+			lives--;
+			space_ship.rect.x = 0;
+			space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
+		}
+	}
 }
 
 render = function() {
@@ -119,6 +128,10 @@ render = function() {
 			}
 		}
 	}
+}
+
+collides (rectA, rectB) {
+	return ((b.rect.x + b.rect.largeur >= a.rect.x && b.rect.x <= a.rect.x + a.rect.largeur) || (b.rect.x <= a.rect.x + a.rect.largeur && b.rect.x + b.rect.largeur >= a.rect.x ) && ((b.rect.y + b.rect.hauteur >= a.rect.y) && (b.rect.y <= a.rect.y + a.rect.hauteur ) || (b.rect.y <= a.rect.y + a.rect.hauteur) && (b.rect.y + b.rect.hauteur >= a.rect.y)));
 }
 
 rectFill = function(a) {
