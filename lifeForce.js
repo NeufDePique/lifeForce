@@ -44,11 +44,11 @@ init = function() {
 
 	
 	for (i = 0; i <= 29; i++) {
-		bullet = {rect: {x: 0, y: 0, width: 1, height: 1}, exists: false, power: 0, speed: 0, friend_bul: false};
+		bullet = {rect: {x: 0, y: 0, width: 5, height: 5}, exists: false, power: 0, speed: 0, friend_bul: false};
 		bullets[i] = bullet;
 	}
 	space_ship.rect = {x: 0, y: ctx.height / 2, width: 40, height: 20};
-	space_ship.weapon = {until_shot: 0, delay: 30, bullet: {rect:{}, exists: false, power: 1, speed: 1, friend_bul: true}};
+	space_ship.weapon = {until_shot: 0, delay: 30, bullet: {rect:{}, exists: false, power: 1, speed: 0.20, friend_bul: true}};
 	game();
 }
 
@@ -95,7 +95,13 @@ update = function(d) {
 	for (i = 0; i <= bullets.length - 1; i++) {
 		if (bullets[i].exists) {
 			if (bullets[i].friend_bul) {
-				bullets[i].x += bullets[i].speed;
+				bullets[i].rect.x += delta / SPEED * bullets[i].speed;
+			} else {
+				bullets[i].rect.x -= delta / SPEED * bullets[i].speed;
+			}
+			
+			if (bullets[i].rect.x >= WIDTH || bullets[i].rect.x <= - bullets[i].rect.width) {
+				bullets[i].exists = false;
 			}
 		}
 	}
@@ -104,7 +110,19 @@ update = function(d) {
 render = function() {
 	ctx.clearRect(0, 0, ctx.width, ctx.height);
 	ctx.fillStyle = "#FF0000";
-	ctx.fillRect(space_ship.rect.x, space_ship.rect.y, space_ship.rect.width, space_ship.rect.height);
+	rectFill(space_ship);
+	ctx.fillStyle = "#FFFF00";
+	for (i = 0; i <= bullets.length - 1; i++) {
+		if (bullets[i].exists) {
+			if (bullets[i].friend_bul) {
+				rectFill(bullets[i]);
+			}
+		}
+	}
+}
+
+rectFill = function(a) {
+	ctx.fillRect(a.rect.x, a.rect.y, a.rect.width, a.rect.height);
 }
 
 playerShoot = function() {
