@@ -6,6 +6,8 @@ const WIDTH = 800;
 const HEIGHT = 600;
 const SPEED = 0.25;
 
+MAX_INVULNERABILITY = 60;
+
 var ctx = null;
 
 var score;
@@ -44,11 +46,15 @@ init = function() {
 
 	level = 1;
 	
+	foes[0] = [];
+	foes[0][0] = {rect: {x: WIDTH - 40, y: HEIGHT/2, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: false, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
+	
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {x: 0, y: 0, width: 5, height: 5}, exists: false, power: 0, speed: 0, friend_bul: false};
 		bullets[i] = bullet;
 	}
 	space_ship.rect = {x: 0, y: ctx.height / 2, width: 40, height: 20};
+	space_ship.force = true;
 	space_ship.weapon = {until_shot: 0, delay: 30, bullet: {rect:{}, exists: false, power: 1, speed: 0.20, friend_bul: true}};
 	game();
 }
@@ -107,19 +113,55 @@ update = function(d) {
 		}
 	}
 	
-	for(i = 0; i <= foes[level - 1].length - 1; i++) {
-		if (collides(space_ship, foes[level - 1][i]) {
-			lives--;
-			space_ship.rect.x = 0;
-			space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
+	for (i = 0; i <= foes[level - 1].length - 1; i++) {
+		if (foes[level - 1][i].hp > 0) {
+			for (j = 0; j <= bullets.length - 1; j++) {
+				if (collides(bullets[j], foes[level - 1][i])) {
+					foes[level - 1][i].hp -= bullets[j].power;
+					bullets[j].exists = false;
+				}
+			}
+			
+			if (!(space_ship.invulnerability) && collides(space_ship, foes[level - 1][i])) {
+				if (space_ship.force) {
+					space_ship.force = false;
+					space_ship.rect.x = foes[level - 1][i].rect.x - space_ship.rect.width - 5;
+				} else {
+					console.log("yay");
+					lives--;
+					space_ship.rect.x = 0;
+					space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
+					space_ship.invulnerability = true;
+					space_ship.invulnerability_timer = MAX_INVULNERABILITY;
+				}
+			}
 		}
+	}
+	
+	if (space_ship.invulnerability_timer > 0) {
+		space_ship.invulnerability_timer--;
+	}
+	
+	if (space_ship.invulnerability_timer == 0) {
+		space_ship.invulnerability = false;
 	}
 }
 
 render = function() {
 	ctx.clearRect(0, 0, ctx.width, ctx.height);
-	ctx.fillStyle = "#FF0000";
+	
+	if (space_ship.invulnerability && (space_ship.invulnerability_timer % 4 == 1 || space_ship.invulnerability_timer % 4 == 2)) {
+		ctx.fillStyle = "#FFFFFF";
+	} else {
+		ctx.fillStyle = "#FF0000";
+	}
 	rectFill(space_ship);
+	
+	if (space_ship.force) {
+		ctx.strokeStyle = "#42ebf4"
+		ctx.strokeRect(space_ship.rect.x, space_ship.rect.y, space_ship.rect.width, space_ship.rect.height);
+	}
+	
 	ctx.fillStyle = "#FFFF00";
 	for (i = 0; i <= bullets.length - 1; i++) {
 		if (bullets[i].exists) {
@@ -128,10 +170,19 @@ render = function() {
 			}
 		}
 	}
+
+	for (i = 0; i <= foes[0].length - 1; i++) {
+		if (foes[level - 1][i].hp > 0) {
+			if (foes[level - 1][i].type == 'm') {
+				ctx.fillStyle = "#0000FF";
+				rectFill(foes[level - 1][i]);
+			}
+		}
+	}
 }
 
-collides (rectA, rectB) {
-	return ((b.rect.x + b.rect.largeur >= a.rect.x && b.rect.x <= a.rect.x + a.rect.largeur) || (b.rect.x <= a.rect.x + a.rect.largeur && b.rect.x + b.rect.largeur >= a.rect.x ) && ((b.rect.y + b.rect.hauteur >= a.rect.y) && (b.rect.y <= a.rect.y + a.rect.hauteur ) || (b.rect.y <= a.rect.y + a.rect.hauteur) && (b.rect.y + b.rect.hauteur >= a.rect.y)));
+collides = function(a, b) {
+	return a.rect.x < b.rect.x + b.rect.width && a.rect.x + a.rect.width > b.rect.x && a.rect.y < b.rect.y + b.rect.height && a.rect.height + a.rect.y > b.rect.y;
 }
 
 rectFill = function(a) {
@@ -158,7 +209,6 @@ playerShoot = function() {
 keyPress = function(e) {
 	switch (e.keyCode) {
 		case 37 :
-			console.log("yay");
 			arrow.left = true;
 			break;
 		case 38 :
