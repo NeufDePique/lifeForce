@@ -12,6 +12,7 @@ var ctx = null;
 
 var score;
 var lives;
+var in_play;
 var level;
 var vertical_oriented;
 var eligible_powup;
@@ -40,6 +41,8 @@ init = function() {
     ctx.width = document.getElementById("cvs").width;
     ctx.height = document.getElementById("cvs").height;
 	
+	in_play = true;
+	lives = 3;
 	
 	document.addEventListener("keydown", keyPress);
 	document.addEventListener("keyup", keyRelease);
@@ -48,6 +51,9 @@ init = function() {
 	
 	foes[0] = [];
 	foes[0][0] = {rect: {x: WIDTH - 40, y: HEIGHT/2, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: false, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
+	
+	walls[0] = [];
+	walls[0][0] = {rect: {x: WIDTH / 2, y: HEIGHT - 40, width: 40, height: 40}, type: 's', destroyable: false};
 	
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {x: 0, y: 0, width: 5, height: 5}, exists: false, power: 0, speed: 0, friend_bul: false};
@@ -62,7 +68,9 @@ init = function() {
 game = function() {
 	update(Date.now());
 	render();
-	requestAnimationFrame(game);
+	if (in_play) {
+		requestAnimationFrame(game);
+	}
 }
 
 update = function(d) {
@@ -128,13 +136,20 @@ update = function(d) {
 					space_ship.rect.x = foes[level - 1][i].rect.x - space_ship.rect.width - 5;
 				} else {
 					console.log("yay");
-					lives--;
-					space_ship.rect.x = 0;
-					space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
-					space_ship.invulnerability = true;
-					space_ship.invulnerability_timer = MAX_INVULNERABILITY;
+					life_lost()
 				}
 			}
+		}
+	}
+	
+	for (i = 0; i <= walls[level - 1].length - 1; i++) {
+		for (j = 0; j <= bullets.length - 1; j++) {
+			if (bullets[i].exists && collides(bullets[j], walls[level - 1][i])) {
+				bullets[i].exists = false;//if you shoot too fast the second bullet goes through the wall, which isn't expected
+			}
+		}
+		if (!(space_ship.invulnerability) && collides(space_ship, walls[level - 1][i])) {
+			life_lost();
 		}
 	}
 	
@@ -173,9 +188,26 @@ render = function() {
 
 	for (i = 0; i <= foes[0].length - 1; i++) {
 		if (foes[level - 1][i].hp > 0) {
-			if (foes[level - 1][i].type == 'm') {
-				ctx.fillStyle = "#0000FF";
-				rectFill(foes[level - 1][i]);
+			switch (foes[level - 1][i].type ) {
+				case 'm': {
+					ctx.fillStyle = "#0000FF";
+					rectFill(foes[level - 1][i]);
+				}
+				default: {
+					ctx.fillStyle = "#FFFFFF";
+				}
+			}
+		}
+	}
+	
+	for (i = 0; i <= walls[level - 1].length - 1; i++) {
+		switch (walls[level - 1][i].type) {
+			case 's': {
+				ctx.fillStyle = "#d854a1";
+				rectFill(walls[level - 1][i]);
+			}
+			default: {
+				ctx.fillStyle = "#FFFFFF";
 			}
 		}
 	}
@@ -203,6 +235,23 @@ playerShoot = function() {
 				break;
 			}
 		}
+	}
+}
+
+life_lost = function() {
+	if (lives >= 0) {
+		lives--;
+		space_ship.rect.x = 0;
+		space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
+		space_ship.invulnerability = true;
+		space_ship.invulnerability_timer = MAX_INVULNERABILITY;
+		space_ship.force = false;
+		space_ship.missile = false;
+		space_ship.laser = false;
+	} else {
+		in_play = false;
+		ctx.font = "30px Arial";
+		ctx.fillText("Game Over", WIDTH / 2, HEIGHT / 2);
 	}
 }
 
