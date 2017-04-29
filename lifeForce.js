@@ -1,9 +1,9 @@
 const LVL_MAX = 1;
-const PRIMARY_AXE_LEN = 10000;
-const SECONDARY_AXE_LEN = 500000;
+const PRIMARY_AXIS_LEN = 500000;
+const SECONDARY_AXIS_LEN = 10000;
 const SCROLLING_SPEED = 4;
 const WIDTH = 800;
-const HEIGHT = 500;
+const HEIGHT = 500; 
 const SPEED = 0.25;
 const POWUP_CHOICE = 5;
 
