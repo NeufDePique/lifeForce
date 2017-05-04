@@ -3,11 +3,10 @@ const PRIMARY_AXIS_LEN = 500000;
 const SECONDARY_AXIS_LEN = 10000;
 const SCROLLING_SPEED = 4;
 const WIDTH = 800;
-const HEIGHT = 500; 
+const HEIGHT = 500;
 const SPEED = 0.25;
 const POWUP_CHOICE = 5;
-
-MAX_INVULNERABILITY = 60;
+const MAX_INVULNERABILITY = 60;
 
 var ctx = null;
 
@@ -26,7 +25,7 @@ var delta;
 
 var arrow = {up: false, right: false, down: false, left: false};
 
-var rect = {x: 0, y: 0, width: 0, height: 0};
+var rect = {x: -1, y: -1, width: 0, height: 0};
 var dir = {x: 0, y: 0};
 var powups = [];
 var bullet = {rect: {}, dir: {}, exists: false, power: 0, speed: 0, friend_bul: false};
@@ -34,7 +33,7 @@ var bullets = [];
 var weapon = {until_shot: 0, delay: 0, bullet: {}};
 var foe = {rect: {}, type: ' ', shooting: false, weapon: {}, has_powup: false, speed: 0, hp: 0, earned_points: 0};
 var foes = [[]];
-var space_ship = {rect: {}, speed: 0, weapon: {}, lvl_weapon: 0, missile: true, ripple: false, laser: true, force: false, invulnerability: false, invulnerability_timer: 0};
+var space_ship = {rect: {}, speed: 0, weapon: {}, lvl_weapon: 0, missile: false, ripple: false, laser: false, force: false, invulnerability: false, invulnerability_timer: 0};
 var wall = {rect: {}, type: ' ', destroyable: false};
 var walls = [[]];
 
@@ -45,17 +44,17 @@ init = function() {
 	
 	in_play = true;
 	lives = 3;
-	eligible_powup = 4;
+	eligible_powup = 0;
 	
 	document.addEventListener("keydown", keyPress);
 	document.addEventListener("keyup", keyRelease);
 
 	level = 1;
 	
-	foes[0] = [];
-	foes[0][0] = {rect: {x: WIDTH - 40, y: HEIGHT/2, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: true, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
+	//foes[0] = [];
+	foes[0][0] = {rect: {x: WIDTH - 40, y: HEIGHT / 2, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: true, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
 	
-	walls[0] = [];
+	//walls[0] = [];
 	walls[0][0] = {rect: {x: WIDTH / 2, y: HEIGHT - 40, width: 40, height: 40}, type: 's', destroyable: false};
 	
 	for (i = 0; i <= 29; i++) {
@@ -68,7 +67,7 @@ init = function() {
 		powups[i] = powup;
 	}
 	
-	space_ship.rect = {x: 0, y: ctx.height / 2, width: 40, height: 20};
+	space_ship.rect = {x: 0, y: HEIGHT / 2, width: 40, height: 20};
 	space_ship.weapon = {until_shot: 0, delay: 30, bullet: {rect:{}, exists: false, power: 1, speed: 0.20, friend_bul: true}};
 	game();
 }
@@ -125,7 +124,7 @@ update = function(d) {
 				}
 			
 			if (bullets[i].rect.x >= WIDTH || bullets[i].rect.x <= - bullets[i].rect.width || bullets[i].rect.y >= HEIGHT || bullets[i].rect.y <= - bullets[i].rect.height) {
-				bullets[i].exists = false;
+				reset_bullet(bullets[i]);
 			}
 		}
 	}
@@ -133,17 +132,15 @@ update = function(d) {
 	for (i = 0; i <= foes[level - 1].length - 1; i++) {
 		if (foes[level - 1][i].hp > 0) {
 			for (j = 0; j <= bullets.length - 1; j++) {
-				if (collides(bullets[j], foes[level - 1][i])) {
+				if (collides(bullets[j], foes[level - 1][i]) && bullets[j].friend_bul) {
 					foes[level - 1][i].hp -= bullets[j].power;
-					bullets[j].exists = false;
+					reset_bullet(bullets[j]);
 					if (foes[level - 1][i].has_powup && foes[level - 1][i].hp <= 0) {
 						for (k = 0; k <= powups.length - 1; k++) {
 							if (!powups[k].exists) {
 								powups[k].exists = true;
 								powups[k].rect.x = foes[level - 1][i].rect.x;
 								powups[k].rect.y = foes[level - 1][i].rect.y;
-								console.log(powups[k]);
-								console.log(powups[k].rect);
 								break;
 							}
 						}
@@ -173,7 +170,7 @@ update = function(d) {
 	for (i = 0; i <= walls[level - 1].length - 1; i++) {
 		for (j = 0; j <= bullets.length - 1; j++) {
 			if (bullets[j].exists && collides(bullets[j], walls[level - 1][i])) {
-				bullets[j].exists = false;
+				reset_bullet(bullets[j]);
 			}
 		}
 		if (!(space_ship.invulnerability) && collides(space_ship, walls[level - 1][i])) {
@@ -251,8 +248,8 @@ render = function() {
 		}
 	}
 	
-	ctx.fillStyle = "#000000"
-	ctx.fillRect(0, HEIGHT, WIDTH, 100);
+	ctx.fillStyle = "#000000";
+	ctx.fillRect(0, ctx.height, ctx.width, 100);
 	
 	powup_choice_render();
 	ctx.strokeStyle = "#FFFFFF";
@@ -277,7 +274,7 @@ playerShoot = function() {
 				var j = i;
 				var k = 0;
 				while (((space_ship.laser && k <= 4) || k < 1) && j <= bullets.length - 1) {
-					if(!bullets[j].exists) {
+					if (!bullets[j].exists) {
 						bullets[j].exists = true;
 						bullets[j].rect.x = space_ship.rect.x + space_ship.rect.width - k * 10;
 						bullets[j].rect.y = space_ship.rect.y + space_ship.rect.height / 2;
@@ -397,6 +394,15 @@ life_lost = function() {
 		ctx.font = "30px Arial";
 		ctx.fillText("Game Over", WIDTH / 2, HEIGHT / 2);
 	}
+}
+
+reset_bullet = function(bullet) {
+	bullet.rect = {x: -1, y: -1, width: 0, height: 0};
+	bullet.dir = {x: 0, y: 0};
+	bullet.exists = false;
+	bullet.power = 0;
+	bullet.speed = 0;
+	bullet.friend_bul = false;
 }
 
 keyPress = function(e) {
