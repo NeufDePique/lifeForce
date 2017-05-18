@@ -49,7 +49,7 @@ init = function() {
 	in_play = true;
 	lives = 5;
 	eligible_powup = -1;
-	vertical_oriented = false;
+	vertical_oriented = true;
 	orient_update(vertical_oriented);
 	
 	document.addEventListener("keydown", keyPress);
@@ -59,11 +59,11 @@ init = function() {
 	
 	foes[0][0] = {rect: {x: 400, y: -500, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: true, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
 	
-	walls[0][0] = {rect: {x: 0, y: -500, width: 40, height: 40}, type: 's', destroyable: false};
-	walls[0][1] = {rect: {x: 200, y: -600, width: 40, height: 40}, type: 's', destroyable: false};
-	walls[0][2] = {rect: {x: 1540, y: 0, width: 40, height: 40}, type: 'd', destroyable: true};
-	walls[0][3] = {rect: {x: 1580, y: 0, width: 40, height: 40}, type: 's', destroyable: false};
-	walls[0][4] = {rect: {x: 1540, y: 40, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][0] = {rect: {x: 0, y: -500, width: 40, height: 40}, type: 'W', destroyable: false};
+	walls[0][1] = {rect: {x: 200, y: -600, width: 40, height: 40}, type: 'W', destroyable: false};
+	walls[0][2] = {rect: {x: 1540, y: 0, width: 40, height: 40}, type: 'w', destroyable: true};
+	walls[0][3] = {rect: {x: 1580, y: 0, width: 40, height: 40}, type: 'W', destroyable: false};
+	walls[0][4] = {rect: {x: 1540, y: 40, width: 40, height: 40}, type: 'W', destroyable: false};
 	
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {x: 0, y: 0, width: 5, height: 5},dir: {x: -1, y: 0}, exists: false, power: 0, speed: 0, friend_bul: false};
@@ -131,12 +131,12 @@ update = function(d) {
 	
 	for (i = 0; i <= bullets.length - 1; i++) {
 		if (bullets[i].exists) {
-			bullets[i].rect.x += bullets[i].dir.x * (delta / space_ship.speed * bullets[i].speed) + delta_scrolling * unit_vector[0];
-			bullets[i].rect.y += bullets[i].dir.y * (delta / space_ship.speed * bullets[i].speed) + delta_scrolling * unit_vector[1];
+			bullets[i].rect.x += bullets[i].dir.x * (dt * bullets[i].speed) + delta_scrolling * unit_vector[0];
+			bullets[i].rect.y += bullets[i].dir.y * (dt * bullets[i].speed) + delta_scrolling * unit_vector[1];
 			if (bullets[i].friend_bul && space_ship.ripple) {
-				bullets[i].rect.height += delta / space_ship.speed * bullets[i].speed * 0.1;
-				bullets[i].rect.x -= delta / space_ship.speed * bullets[i].speed * 0.05 * unit_vector[0];
-				bullets[i].rect.y -= delta / space_ship.speed * bullets[i].speed * 0.05 * unit_vector[1];
+				bullets[i].rect.height += dt * bullets[i].speed * 0.1;
+				bullets[i].rect.x -= dt * bullets[i].speed * 0.05 * unit_vector[0];
+				bullets[i].rect.y -= dt * bullets[i].speed * 0.05 * unit_vector[1];
 			}
 			if (!entity_on_screen(bullets[i])) {
 				reset_bullet(bullets[i]);
@@ -146,6 +146,17 @@ update = function(d) {
 	
 	for (i = 0; i <= foes[level].length - 1; i++) {
 		if (foes[level][i].hp > 0 && entity_on_screen(foes[level][i])) { 
+			switch (foes[level][i].type.toLowerCase()) {
+				case 'c': {
+					foes[level][i].rect.x -= dt * foes[level][i].speed;
+					if (collidesWall(foes[level][i], walls[level])) {
+						foes[level][i].rect.x += dt * foes[level][i].speed;
+						foes[level][i].rect.y += foes[level][i].rect.y >= HEIGHT / 2 ? dt * foes[level][i].speed : - dt * foes[level][i].speed;   
+					}
+				}
+				default: 
+			}
+
 			for (j = 0; j <= bullets.length - 1; j++) {
 				if (collides(bullets[j], foes[level][i]) && bullets[j].friend_bul) {
 					foes[level][i].hp -= bullets[j].power;
@@ -257,8 +268,12 @@ render = function() {
 	
 	for (i = 0; i <= walls[level].length - 1; i++) {
 		switch (walls[level][i].type) {
-			case 's': {
+			case 'w': {
 				ctx.fillStyle = "#d854a1";
+				rectFill(walls[level][i]);
+			} break;
+			case "W": {
+				ctx.fillStyle = "#fe49e42";
 				rectFill(walls[level][i]);
 			} break;
 			case 'd': {
@@ -288,6 +303,15 @@ render = function() {
 
 collides = function(a, b) {
 	return a.rect.x < b.rect.x + b.rect.width && a.rect.x + a.rect.width > b.rect.x && a.rect.y < b.rect.y + b.rect.height && a.rect.height + a.rect.y > b.rect.y;
+}
+
+collidesWall = function(entity, walls) {
+	for (i = 0; i <= walls.length - 1; i++) {
+		if (collides(entity, walls[i])) {
+			return true;
+		}
+	}
+	return false;
 }
 
 rectFill = function(a) {
