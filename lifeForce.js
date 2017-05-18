@@ -61,7 +61,7 @@ init = function() {
 	
 	walls[0][0] = {rect: {x: 0, y: -500, width: 40, height: 40}, type: 's', destroyable: false};
 	walls[0][1] = {rect: {x: 200, y: -600, width: 40, height: 40}, type: 's', destroyable: false};
-	walls[0][2] = {rect: {x: 1540, y: 0, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][2] = {rect: {x: 1540, y: 0, width: 40, height: 40}, type: 'd', destroyable: true};
 	walls[0][3] = {rect: {x: 1580, y: 0, width: 40, height: 40}, type: 's', destroyable: false};
 	walls[0][4] = {rect: {x: 1540, y: 40, width: 40, height: 40}, type: 's', destroyable: false};
 	
@@ -186,6 +186,10 @@ update = function(d) {
 		for (j = 0; j <= bullets.length - 1; j++) {
 			if (bullets[j].exists && collides(bullets[j], walls[level][i])) {
 				reset_bullet(bullets[j]);
+				if (walls[level][i].destroyable) {
+					walls[level][i].rect.width = 0;
+					walls[level][i].rect.height = 0;
+				}
 			}
 		}
 		if (!(space_ship.invulnerability) && collides(space_ship, walls[level][i])) {
@@ -256,7 +260,11 @@ render = function() {
 			case 's': {
 				ctx.fillStyle = "#d854a1";
 				rectFill(walls[level][i]);
-			}
+			} break;
+			case 'd': {
+				ctx.fillStyle = "#f49e42";
+				rectFill(walls[level][i]);
+			} break;
 			default: {
 				ctx.fillStyle = "#FFFFFF";
 			}
