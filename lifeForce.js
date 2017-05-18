@@ -1,26 +1,31 @@
 const LVL_MAX = 1;
-const PRIMARY_AXIS_LEN = 500000;
-const SECONDARY_AXIS_LEN = 10000;
-const SCROLLING_SPEED = 4;
-const WIDTH = 800;
-const HEIGHT = 500;
+const PRIMARY_AXIS_LEN = 700;
+const SECONDARY_AXIS_LEN = 500;
+const SCROLLING_SPEED = 0.15;
 const POWUP_CHOICE = 5;
 const MAX_INVULNERABILITY = 60;
+const SPACESHIP_SPEED_LIMIT = 0.5;
+
 
 var ctx = null;
+var cvs = null;
 
 var score;
 var lives;
 var pos_on_map = 0;
+var unit_vector = [0,0];
 var in_play;
 var level;
 var vertical_oriented;
 var eligible_powup;
 var lvl_size = [];
+var width;
+var height;
 
 var dt;
 var old = Date.now();
 var delta;
+var delta_scrolling;
 
 var arrow = {up: false, right: false, down: false, left: false};
 
@@ -37,23 +42,28 @@ var wall = {rect: {}, type: ' ', destroyable: false};
 var walls = [[]];
 
 init = function() {
-    ctx = document.getElementById("cvs").getContext("2d");
-    ctx.width = document.getElementById("cvs").width;
-    ctx.height = document.getElementById("cvs").height;
+	
+	cvs = document.getElementById("cvs");
+    ctx = cvs.getContext("2d");
 	
 	in_play = true;
 	lives = 5;
-	eligible_powup = 0;
-	vertical_oriented = false;
+	eligible_powup = -1;
+	vertical_oriented = true;
+	orient_update(vertical_oriented);
 	
 	document.addEventListener("keydown", keyPress);
 	document.addEventListener("keyup", keyRelease);
 
-	level = 1;
+	level = 0;
 	
-	foes[0][0] = {rect: {x: 950, y: HEIGHT / 2, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: true, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
+	foes[0][0] = {rect: {x: 400, y: -500, width: 40, height: 20}, type: 'm', shooting: false, weapon: {}, has_powup: true, speed: 10, hp: 5, earned_points: 0}; //dummy foe to test with
 	
-	walls[0][0] = {rect: {x: 1200, y: HEIGHT - 40, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][0] = {rect: {x: 0, y: -500, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][1] = {rect: {x: 200, y: -600, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][2] = {rect: {x: 1540, y: 0, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][3] = {rect: {x: 1580, y: 0, width: 40, height: 40}, type: 's', destroyable: false};
+	walls[0][4] = {rect: {x: 1540, y: 40, width: 40, height: 40}, type: 's', destroyable: false};
 	
 	for (i = 0; i <= 29; i++) {
 		bullet = {rect: {x: 0, y: 0, width: 5, height: 5},dir: {x: -1, y: 0}, exists: false, power: 0, speed: 0, friend_bul: false};
@@ -65,7 +75,7 @@ init = function() {
 		powups[i] = powup;
 	}
 	
-	space_ship.rect = {x: 0, y: HEIGHT / 2, width: 40, height: 20};
+	space_ship.rect = {x: (width / 2 - 20) * - unit_vector[1] + 20 * unit_vector[0], y: (height / 2 - 10) * unit_vector[0] + (height - 40) * - unit_vector[1] , width: 40, height: 20};
 	space_ship.speed = 0.25;
 	space_ship.weapon = {until_shot: 0, delay: 30, bullet: {rect:{}, exists: false, power: 1, speed: 0.40, friend_bul: true}};
 	game();
@@ -83,54 +93,35 @@ update = function(d) {
 	dt = d - old;
 	old = d;
 	delta = dt * space_ship.speed;
+	delta_scrolling = dt * SCROLLING_SPEED;
+	
+	pos_on_map += delta_scrolling;
+	
+	space_ship.rect.x += delta_scrolling * unit_vector[0];
+	space_ship.rect.y += delta_scrolling * unit_vector[1];
 	
 	if (arrow.right) {
 		space_ship.rect.x += delta;
-		if (vertical_oriented) { //ugly but...
-			if (space_ship.rect.x + space_ship.rect.width >= WIDTH) {
-				space_ship.rect.x = WIDTH - space_ship.rect.width;
-			}
-		} else {
-			if (space_ship.rect.x + space_ship.rect.width - pos_on_map >= WIDTH) {
-				space_ship.rect.x = WIDTH - space_ship.rect.width + pos_on_map;
-			}
+		if (space_ship.rect.x + space_ship.rect.width - pos_on_map * unit_vector[0] >= width) {
+			space_ship.rect.x = width - space_ship.rect.width + pos_on_map * unit_vector[0];
 		}
- 
 	}
 	if (arrow.left) {
 		space_ship.rect.x -= delta;
-		if (vertical_oriented) {
-			if (space_ship.rect.x <= 0) {
-				space_ship.rect.x = 0;
-			}
-		} else {
-			if (space_ship.rect.x - pos_on_map <= 0) {
-				space_ship.rect.x = 0 + pos_on_map;
-			}
+		if (space_ship.rect.x - pos_on_map * unit_vector[0] <= 0) {
+			space_ship.rect.x = pos_on_map * unit_vector[0];
 		}
 	}
 	if (arrow.down) {
 		space_ship.rect.y += delta;
-		if (vertical_oriented) {
-			if (space_ship.rect.y + space_ship.rect.height >= HEIGHT) {
-				space_ship.rect.y = HEIGHT - space_ship.rect.height;
-			} //later...
-		} else {
-			if (space_ship.rect.y + space_ship.rect.height >= HEIGHT) {
-				space_ship.rect.y = HEIGHT - space_ship.rect.height;
-			}
+		if (space_ship.rect.y + space_ship.rect.height - pos_on_map * unit_vector[1] >= height) {
+			space_ship.rect.y = height - space_ship.rect.height + pos_on_map * unit_vector[1];
 		}
 	}
 	if (arrow.up) {
 		space_ship.rect.y -= delta;
-		if (vertical_oriented) {
-			if (space_ship.rect.y <= 0) {
-				space_ship.rect.y = 0;
-			} //later...
-		} else {
-			if (space_ship.rect.y <= 0) {
-				space_ship.rect.y = 0;
-			}			
+		if (space_ship.rect.y - pos_on_map * unit_vector[1] <= 0) {
+			space_ship.rect.y = pos_on_map * unit_vector[1];
 		}
 	}
 	
@@ -140,34 +131,21 @@ update = function(d) {
 	
 	for (i = 0; i <= bullets.length - 1; i++) {
 		if (bullets[i].exists) {
-			if (vertical_oriented) {
-				bullets[i].rect.x += bullets[i].dir.x * (delta / space_ship.speed * bullets[i].speed);
-				bullets[i].rect.y += bullets[i].dir.y * (delta / space_ship.speed * bullets[i].speed);
-				if (bullets[i].friend_bul && space_ship.ripple) {
-					bullets[i].rect.height += delta / space_ship.speed * bullets[i].speed * 0.1;
-					bullets[i].rect.y -= delta / space_ship.speed * bullets[i].speed * 0.05;
-				}
-				
-				if (bullets[i].rect.x >= WIDTH || bullets[i].rect.x <= - bullets[i].rect.width || bullets[i].rect.y >= HEIGHT || bullets[i].rect.y <= - bullets[i].rect.height) {
-					reset_bullet(bullets[i]);
-				}
-				//later...
-			} else {
-				bullets[i].rect.x += bullets[i].dir.x * (delta / space_ship.speed * bullets[i].speed) + SCROLLING_SPEED;
-				bullets[i].rect.y += bullets[i].dir.y * (delta / space_ship.speed * bullets[i].speed);
-				if (bullets[i].friend_bul && space_ship.ripple) {
-					bullets[i].rect.height += delta / space_ship.speed * bullets[i].speed * 0.1;
-					bullets[i].rect.y -= delta / space_ship.speed * bullets[i].speed * 0.05;
-				}
-				if (bullets[i].rect.x - pos_on_map >= WIDTH || bullets[i].rect.x - pos_on_map <= - bullets[i].rect.width || bullets[i].rect.y >= HEIGHT || bullets[i].rect.y <= - bullets[i].rect.height) {
-					reset_bullet(bullets[i]);
-				}
+			bullets[i].rect.x += bullets[i].dir.x * (delta / space_ship.speed * bullets[i].speed) + delta_scrolling * unit_vector[0];
+			bullets[i].rect.y += bullets[i].dir.y * (delta / space_ship.speed * bullets[i].speed) + delta_scrolling * unit_vector[1];
+			if (bullets[i].friend_bul && space_ship.ripple) {
+				bullets[i].rect.height += delta / space_ship.speed * bullets[i].speed * 0.1;
+				bullets[i].rect.x -= delta / space_ship.speed * bullets[i].speed * 0.05 * unit_vector[0];
+				bullets[i].rect.y -= delta / space_ship.speed * bullets[i].speed * 0.05 * unit_vector[1];
 			}
+			if (bullets[i].rect.x - pos_on_map * unit_vector[0] >= width || bullets[i].rect.x - pos_on_map * unit_vector[0] <= - bullets[i].rect.width || bullets[i].rect.y - pos_on_map * unit_vector[1] >= height || bullets[i].rect.y - pos_on_map * unit_vector[1] <= - bullets[i].rect.height) {
+				reset_bullet(bullets[i]);
+			} 
 		}
 	}
 	
-	for (i = 0; i <= foes[level - 1].length - 1; i++) {
-		if (foes[level - 1][i].hp > 0) {
+	for (i = 0; i <= foes[level].length - 1; i++) {
+		if (foes[level - 1][i].hp > 0) { 
 			for (j = 0; j <= bullets.length - 1; j++) {
 				if (collides(bullets[j], foes[level - 1][i]) && bullets[j].friend_bul) {
 					foes[level - 1][i].hp -= bullets[j].power;
@@ -204,7 +182,7 @@ update = function(d) {
 		}
 	}
 	
-	for (i = 0; i <= walls[level - 1].length - 1; i++) {
+	for (i = 0; i <= walls[level].length - 1; i++) {
 		for (j = 0; j <= bullets.length - 1; j++) {
 			if (bullets[j].exists && collides(bullets[j], walls[level - 1][i])) {
 				reset_bullet(bullets[j]);
@@ -221,17 +199,6 @@ update = function(d) {
 	
 	if (space_ship.invulnerability_timer == 0) {
 		space_ship.invulnerability = false;
-	}
-	
-	if (vertical_oriented) {
-		space_ship.rect.y += SCROLLING_SPEED;
-	} else {
-		space_ship.rect.x += SCROLLING_SPEED;
-	}
-	
-	pos_on_map += SCROLLING_SPEED;
-	if (space_ship.rect.x <= 1000) {
-		console.log(space_ship.rect.x);
 	}
 }
 
@@ -297,12 +264,17 @@ render = function() {
 	}
 	
 	ctx.fillStyle = "#000000";
-	ctx.fillRect(0, HEIGHT, WIDTH, 100);
+	ctx.fillRect(0, height, width, 100);
 	
 	powup_choice_render();
 	ctx.strokeStyle = "#FFFFFF";
 	for (i = 0; i <= POWUP_CHOICE - 1; i++) {
 		ctx.strokeRect(i * 25, ctx.height - 75, 20, 5);
+	}
+	
+	if (!in_play) {
+		ctx.font = "30px Arial";
+		ctx.fillText("Game Over, you loose !", width / 2 - 100, height / 2);
 	}
 }
 
@@ -311,11 +283,7 @@ collides = function(a, b) {
 }
 
 rectFill = function(a) {
-	if (vertical_oriented) {
-		ctx.fillRect(a.rect.x, a.rect.y - pos_on_map, a.rect.width, a.rect.height);
-	} else {
-		ctx.fillRect(a.rect.x - pos_on_map, a.rect.y, a.rect.width, a.rect.height);
-	}
+	ctx.fillRect(a.rect.x - pos_on_map * unit_vector[0], a.rect.y - pos_on_map * unit_vector[1], a.rect.width, a.rect.height);
 }
 
 playerShoot = function() {
@@ -328,12 +296,12 @@ playerShoot = function() {
 				while (((space_ship.laser && k <= 4) || k < 1) && j <= bullets.length - 1) {
 					if (!bullets[j].exists) {
 						bullets[j].exists = true;
-						bullets[j].rect.x = space_ship.rect.x + space_ship.rect.width - k * 10;
-						bullets[j].rect.y = space_ship.rect.y + space_ship.rect.height / 2;
+						bullets[j].rect.x = space_ship.rect.x + (space_ship.rect.width / 2) * - unit_vector[1] + (space_ship.rect.width - k * 10) * unit_vector[0];
+						bullets[j].rect.y = space_ship.rect.y + (space_ship.rect.height / 2) * unit_vector[0] + (space_ship.rect.height - k * 10) * - unit_vector[1];
 						bullets[j].rect.width = 5;
 						bullets[j].rect.height = 5;
-						bullets[j].dir.x = 1;
-						bullets[j].dir.y = 0;
+						bullets[j].dir.x = unit_vector[0];
+						bullets[j].dir.y = unit_vector[1];
 						bullets[j].friend_bul = true;
 						bullets[j].power = space_ship.weapon.bullet.power;
 						bullets[j].speed = space_ship.weapon.bullet.speed;
@@ -377,10 +345,30 @@ playerShoot = function() {
 	}
 }
 
+orient_update = function(vertical_oriented) {
+	if (vertical_oriented) {
+		unit_vector[0] = 0;
+		unit_vector[1] = -1;
+		width = SECONDARY_AXIS_LEN;
+		height = PRIMARY_AXIS_LEN;
+		cvs.width += width;
+		cvs.height += height;
+	} else {
+		unit_vector[0] = 1;
+		unit_vector[1] = 0;
+		width = PRIMARY_AXIS_LEN;
+		height = SECONDARY_AXIS_LEN;
+		cvs.width += width;
+		cvs.height += height;
+	}
+	ctx.width = cvs.width;
+    ctx.height = cvs.height;
+}
+
 powup_activ = function() {
 	switch (eligible_powup) {
 		case 0:
-			space_ship.speed += 0.05;
+			space_ship.speed += space_ship.speed < SPACESHIP_SPEED_LIMIT ? 0.05 : 0;
 			break;
 		case 1:
 			space_ship.missile = true;
@@ -439,18 +427,10 @@ life_lost = function() {
 		space_ship.missile = false;
 		space_ship.laser = false;
 		eligible_powup = 0;
-		if (vertical_oriented) {
-			space_ship.rect.x = 0;
-			space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
-			//later...
-		} else {
-			space_ship.rect.x = pos_on_map;
-			space_ship.rect.y = HEIGHT / 2 - space_ship.rect.height / 2;
-		}
+		space_ship.rect.x = (width / 2 - space_ship.rect.width / 2) * - unit_vector[1] + pos_on_map * unit_vector[0];
+		space_ship.rect.y = (height / 2 - space_ship.rect.height / 2) * unit_vector[0] + (pos_on_map - height + space_ship.rect.height) * unit_vector[1];
 	} else {
 		in_play = false;
-		ctx.font = "30px Arial";
-		ctx.fillText("Game Over", WIDTH / 2, HEIGHT / 2);
 	}
 }
 
