@@ -49,7 +49,7 @@ init = function() {
 	in_play = true;
 	lives = 5;
 	eligible_powup = -1;
-	vertical_oriented = true;
+	vertical_oriented = false;
 	orient_update(vertical_oriented);
 	
 	document.addEventListener("keydown", keyPress);
@@ -138,24 +138,24 @@ update = function(d) {
 				bullets[i].rect.x -= delta / space_ship.speed * bullets[i].speed * 0.05 * unit_vector[0];
 				bullets[i].rect.y -= delta / space_ship.speed * bullets[i].speed * 0.05 * unit_vector[1];
 			}
-			if (bullets[i].rect.x - pos_on_map * unit_vector[0] >= width || bullets[i].rect.x - pos_on_map * unit_vector[0] <= - bullets[i].rect.width || bullets[i].rect.y - pos_on_map * unit_vector[1] >= height || bullets[i].rect.y - pos_on_map * unit_vector[1] <= - bullets[i].rect.height) {
+			if (!entity_on_screen(bullets[i])) {
 				reset_bullet(bullets[i]);
 			} 
 		}
 	}
 	
 	for (i = 0; i <= foes[level].length - 1; i++) {
-		if (foes[level - 1][i].hp > 0) { 
+		if (foes[level][i].hp > 0 && entity_on_screen(foes[level][i])) { 
 			for (j = 0; j <= bullets.length - 1; j++) {
-				if (collides(bullets[j], foes[level - 1][i]) && bullets[j].friend_bul) {
-					foes[level - 1][i].hp -= bullets[j].power;
+				if (collides(bullets[j], foes[level][i]) && bullets[j].friend_bul) {
+					foes[level][i].hp -= bullets[j].power;
 					reset_bullet(bullets[j]);
-					if (foes[level - 1][i].has_powup && foes[level - 1][i].hp <= 0) {
+					if (foes[level][i].has_powup && foes[level][i].hp <= 0) {
 						for (k = 0; k <= powups.length - 1; k++) {
 							if (!powups[k].exists) {
 								powups[k].exists = true;
-								powups[k].rect.x = foes[level - 1][i].rect.x;
-								powups[k].rect.y = foes[level - 1][i].rect.y;
+								powups[k].rect.x = foes[level][i].rect.x;
+								powups[k].rect.y = foes[level][i].rect.y;
 								break;
 							}
 						}
@@ -163,10 +163,10 @@ update = function(d) {
 				}
 			}
 			
-			if (!(space_ship.invulnerability) && collides(space_ship, foes[level - 1][i])) {
+			if (!(space_ship.invulnerability) && collides(space_ship, foes[level][i])) {
 				if (space_ship.force) {
 					space_ship.force = false;
-					space_ship.rect.x = foes[level - 1][i].rect.x - space_ship.rect.width - 5;
+					space_ship.rect.x = foes[level][i].rect.x - space_ship.rect.width - 5;
 				} else {
 					life_lost()
 				}
@@ -184,11 +184,11 @@ update = function(d) {
 	
 	for (i = 0; i <= walls[level].length - 1; i++) {
 		for (j = 0; j <= bullets.length - 1; j++) {
-			if (bullets[j].exists && collides(bullets[j], walls[level - 1][i])) {
+			if (bullets[j].exists && collides(bullets[j], walls[level][i])) {
 				reset_bullet(bullets[j]);
 			}
 		}
-		if (!(space_ship.invulnerability) && collides(space_ship, walls[level - 1][i])) {
+		if (!(space_ship.invulnerability) && collides(space_ship, walls[level][i])) {
 			life_lost();
 		}
 	}
@@ -231,11 +231,11 @@ render = function() {
 	}
 
 	for (i = 0; i <= foes[0].length - 1; i++) {
-		if (foes[level - 1][i].hp > 0) {
-			switch (foes[level - 1][i].type ) {
+		if (foes[level][i].hp > 0  && entity_on_screen(foes[level][i])) {
+			switch (foes[level][i].type ) {
 				case 'm': {
 					ctx.fillStyle = "#0000FF";
-					rectFill(foes[level - 1][i]);
+					rectFill(foes[level][i]);
 				}
 				default: {
 					ctx.fillStyle = "#FFFFFF";
@@ -251,11 +251,11 @@ render = function() {
 		}
 	}
 	
-	for (i = 0; i <= walls[level - 1].length - 1; i++) {
-		switch (walls[level - 1][i].type) {
+	for (i = 0; i <= walls[level].length - 1; i++) {
+		switch (walls[level][i].type) {
 			case 's': {
 				ctx.fillStyle = "#d854a1";
-				rectFill(walls[level - 1][i]);
+				rectFill(walls[level][i]);
 			}
 			default: {
 				ctx.fillStyle = "#FFFFFF";
@@ -441,6 +441,10 @@ reset_bullet = function(bullet) {
 	bullet.power = 0;
 	bullet.speed = 0;
 	bullet.friend_bul = false;
+}
+
+entity_on_screen = function (entity) {
+	return (entity.rect.x >= pos_on_map * unit_vector[0] && entity.rect.x + entity.rect.width <= pos_on_map * unit_vector[0] + width && entity.rect.y >= pos_on_map * unit_vector[1] && entity.rect.y - height <= pos_on_map * unit_vector[1] + height);
 }
 
 keyPress = function(e) {
