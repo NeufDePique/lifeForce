@@ -5,11 +5,7 @@ const SCROLLING_SPEED = 0.15;
 const POWUP_CHOICE = 5;
 const MAX_INVULNERABILITY = 60;
 const SPACESHIP_SPEED_LIMIT = 0.5;
-<<<<<<< HEAD
 const UNIT_MAP = 20;
-=======
->>>>>>> 04607bb37b1af7f579b069f9a3ad0e7bc9fd9965
-
 
 var ctx = null;
 var cvs = null;
