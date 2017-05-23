@@ -40,8 +40,9 @@ var foe = {rect: {}, type: ' ', shooting: false, weapon: {}, has_powup: false, s
 var foes = [[]];
 var space_ship = {rect: {}, speed: 0, weapon: {}, lvl_weapon: 0, missile: false, ripple: false, laser: false, force: false, invulnerability: false, invulnerability_timer: 0};
 var wall = {rect: {}, type: ' ', destroyable: false};
-var walls = [[[]]];
+var walls = [[]];
 var min_wall_on_screen_index = [];
+var min_foe_on_screen_index = [];
 
 init = function() {
 	
@@ -57,7 +58,7 @@ init = function() {
 	lvl_maps = [];
 	lvl_maps.push(
 	["----------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWwWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
-	 "-----------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWW----------------------WWWWWWWWWWWWWWWWWWWWWWW------------------------------------------WWWWWWWWWWWWWWWWWWW-----------WWWWWWWWWWW-------------WWWWWWWWWWWWWWWWWW-WWWWWWWWWWWWWWWW----------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------w---------w-------w----w--------w-------w-------w-----w--------w-----ww-----w--------------------------------n----------n--------n----------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------------------------------------------------------------------------------------W",
+	 "-----------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWW----------------------WWWWWWWWWWWWWWWWWWWWWWW------------------------------------------WWWWWWWWWWWWWWWWWWW-----------WWWWWWWWWWW-------------WWWWWWWWWWWWWWWWWW-WWWWWWWWWWWWWWWW----------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------w---------w-------w----w--------w-------w-------w-----w--------w-----ww-----w--------------------------------N----------N--------N----------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "-----------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWW-----------------------WWWWWWWWWWWWWWWWWWWWW--------------------------------------------WWWWWWWWWWWWWWWWW------------WWWWWWWWWWW-------------WWWWWWWWWWWWWWWWWW--WWWWWWWWWWWWWW---------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB-------------m------------------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB---------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB--------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB-----------------WWWWWWWWWWWWWWWWWWWWW----------------------------------------WWWWWWWWWWWWWTWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW---------------------w---------w-----w----w---------w-------s------w-----w---------w---ss--w---s--------------------------------------m---------m---------------------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWW-------------------------WWWWWWWWWWWWWWWWWWW----------------------------------------------WWWWWWWWWWWWWWW--------------WWWWWWWWW---------------WWWWWWWWWWWWWWWW----WWWWWWWWWWWW---------------m---------------------------------------------------------------------------m-----------------------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB------------------------C---------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBB----------------------------------BBBBBBBBBBBBBBBBBBBBB--------------------WWWWWWWWWWWWWWWWWWWW------------------------------------------WWWWWWWWWWWWWWWWWWWW---WWWWWWWWWWWWWWWWW---------------------WWWWWWWWWWWWWWWWWWWWWWWWWWTWWWWWWWWWWWW----------------------w----------w-www----w----------w--------w------w-----w-------s---w-----wws-----------------------------------------------------------------------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWW---------------------------WWWWWWWWWWWWWWW-------------------------------------------------WWWWWWWWWWWWW---------------WWWWWWWWW----------------WWWWWWWWWWWWWW------WWWWWWWWWW--------------------------------------------------------------------------------------------M------------------------------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB----------------------------c-------c----------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWW--------------------------------------------WWWWWWWWWWWWWWWWWW----WWWWWWWWWWWWWWW---m-------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW------------------------w----------w-------w-----------w--------www--w-------sw-wwwwww-w-----w-----------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
@@ -69,7 +70,7 @@ init = function() {
 	 "-----------------------------------f-f-f-f-f-F---------------f-f-f-f-f-F-------------------f-f-f-f-f-F-----------------------WWWWWWWW---------------------------------------m---------------------WWWWWWWWWWWWWW--------------------------------------------------------------------------------------------------m--------------------------------------------------------------------------------------------------------------------------------------------BBBBBBBBBBBBBBBBBBBBB-------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB---------------------BBBBBBBBBBBBBBBBBBBB----------------------BBBBBBBBBBBBBBBBBBBBBBBBBBB--------------------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBB----------WWWWWWWW---------------------------------------------------------WWW-----------------WWW-------------------------------------------------------------------------------------------w-----w-----------w-----------------s------w-w--------s--------w--w-------------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "---------------------------------------------------------------------------------------------------------------------------------------------------------------------------M---------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW----------------------------------------------------M-------------------------------------------------------------------------------------------------------------------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB---------------------------------------------------BB-------------BBBBBBBBB-------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWW-----------------------------------------------------------------wwwww-----------w-----------------w-w----s---w--------sw-----w----w------------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW------------------------------------------------------m------------------------------------------------------------------------------------------------------------------------------------------------------BBBBBBBBBBBBBBBBBBBBBB-----------------------BBBBBBBBBBBBBBBBBB-----------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB--------------------------------------------------------------m------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWW------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWW---------------------------------------------------------------w-----w---------w-----------------w---s--w-----s---------w---w------s-----------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
-	 "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------m---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------n-----------n----------------------------------------------------------------------M---------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------w-------w-------w------------------w---w-w-----ww---------w--w--------w----------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
+	 "----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------m---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------N-----------N----------------------------------------------------------------------M---------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------w-------w-------w------------------w---w-w-----ww---------w--w--------w----------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww---------------------------------------------------------------------------------------------------------------b-------------------------------W",
 	 "------------------------------------------------f-f-f-f-f-F---------------f-f-f-f-f-F------f-f-f-f-f-F---------------------------------------WWWWWWWWW--------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------m-------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW----------------------------------WWWWWWWWWWWWWWWWWWWWWWWWTWWWWWWWW---------------------------------------------------------w---------wwwwwwww-----------------s-----w-----w--w---------sw--------s-----------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "--------------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWW--------------------------------------------------------WWWWWWWWWWWWWWWWWW---------------------------------------------------------------------------------m--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------m------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW------------------------------------------------------w---------w--------w----------------s------s----s---w---------w--------w-----------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "-------------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWW------------------WWWWWW--------------------------------WWWWWWWWWWWWWWWW----------------------------------------------------------------------------------M-------------------------------------------------------------------------------------------------m------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------m-----------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW----------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------w-------ww---------w--------------w-------w---w-----wsw------w-------w------------------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww--------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww-----------------------------------------------------------------------------------------------------------------------------------------------W",
@@ -177,47 +178,55 @@ update = function(d) {
 	}
 	
 	for (i = 0; i <= foes[level].length - 1; i++) {
-		if (foes[level][i].hp > 0 && entity_on_screen(foes[level][i])) { 
-			switch (foes[level][i].type.toLowerCase()) {
-				case 'c': {
-					foes[level][i].rect.x -= dt * foes[level][i].speed;
-					if (collidesWall(foes[level][i], walls[level])) {
-						foes[level][i].rect.x += dt * foes[level][i].speed;
-						foes[level][i].rect.y += foes[level][i].rect.y >= HEIGHT / 2 ? dt * foes[level][i].speed : - dt * foes[level][i].speed;   
+		while (pos_on_map > foes[level][i][min_foe_on_screen_index[i]]) {
+			min_foe_on_screen_index[i]++;
+		}
+		for (j = min_foe_on_screen_index[i]; j <= foes[level][i].length - 1; j++) {
+			if (foes[level][i][j].hp > 0 && entity_on_screen(foes[level][i][j])) { 
+				switch (foes[level][i][j].type.toLowerCase()) {
+					case 'c': {
+						foes[level][i][j].rect.x -= dt * foes[level][i][j].speed;
+						if (collidesWall(foes[level][i][j], walls[level])) {
+							foes[level][i][j].rect.x += dt * foes[level][i][j].speed;
+							foes[level][i][j].rect.y += foes[level][i][j].rect.y >= HEIGHT / 2 ? dt * foes[level][i][j].speed : - dt * foes[level][i][j].speed;   
+						}
 					}
+					break;                                                                                                                         
 				}
-				default: 
-			}
 
-			for (j = 0; j <= bullets.length - 1; j++) {
-				if (collides(bullets[j], foes[level][i]) && bullets[j].friend_bul) {
-					foes[level][i].hp -= bullets[j].power;
-					reset_bullet(bullets[j]);
-					if (foes[level][i].has_powup && foes[level][i].hp <= 0) {
-						for (k = 0; k <= powups.length - 1; k++) {
-							if (!powups[k].exists) {
-								powups[k].exists = true;
-								powups[k].rect.x = foes[level][i].rect.x;
-								powups[k].rect.y = foes[level][i].rect.y;
-								break;
+				for (k = 0; k <= bullets.length - 1; k++) {
+					if (collides(bullets[k], foes[level][i][j]) && bullets[k].friend_bul) {
+						foes[level][i][j].hp -= bullets[k].power;
+						reset_bullet(bullets[k]);
+						if (foes[level][i][j].has_powup && foes[level][i][j].hp <= 0) {
+							for (l = 0; l <= powups.length - 1; l++) {
+								if (!powups[l].exists) {
+									powups[l].exists = true;
+									powups[l].rect.x = foes[level][i].rect.x;
+									powups[l].rect.y = foes[level][i].rect.y;
+									break;
+								}
 							}
 						}
 					}
 				}
-			}
-			
-			if (!(space_ship.invulnerability) && collides(space_ship, foes[level][i])) {
-				if (space_ship.force) {
-					space_ship.force = false;
-					space_ship.rect.x = foes[level][i].rect.x - space_ship.rect.width - 5;
-				} else {
-					life_lost()
+				
+				if (!(space_ship.invulnerability) && collides(space_ship, foes[level][i])) {
+					if (space_ship.force) {
+						space_ship.force = false;
+						space_ship.rect.x = foes[level][i][j].rect.x - space_ship.rect.width - 5;
+					} else {
+						life_lost()
+					}
+				}
+				if (!entity_on_screen(foes[level][i][j])) {
+					break;
 				}
 			}
 		}
 	}
 	
-	for (i = 0; i <= powups.length - 1; i++) {
+	for (var i = 0; i <= powups.length - 1; i++) {
 		if (collides(space_ship, powups[i]) && powups[i].exists) {
 			powups[i].exists = false;
 			eligible_powup++;
@@ -225,7 +234,7 @@ update = function(d) {
 		}
 	}
 	
-	for (i = 0; i <= walls[level].length - 1; i++) {
+	for (var i = 0; i <= walls[level].length - 1; i++) {
 		while (pos_on_map > walls[level][i][min_wall_on_screen_index[i]].x + walls[level][i][min_wall_on_screen_index[i]].width) {
 			min_wall_on_screen_index[i]++;
 		}
@@ -240,7 +249,7 @@ update = function(d) {
 					}
 				}
 			}
-			
+            
 			if (collidesWall(space_ship, walls) && !space_ship.invulnerability) {
 				lifeLost();
 			}
@@ -250,9 +259,7 @@ update = function(d) {
 			}
 		}
 	}
-		if (!(space_ship.invulnerability) && collides(space_ship, walls[level][i])) {
-			life_lost();
-		}
+
 	if (space_ship.invulnerability_timer > 0) {
 		space_ship.invulnerability_timer--;
 	}
@@ -290,16 +297,28 @@ render = function() {
 		}
 	}
 
-	for (i = 0; i <= foes[0].length - 1; i++) {
-		if (foes[level][i].hp > 0  && entity_on_screen(foes[level][i])) {
-			switch (foes[level][i].type ) {
-				case 'm': {
-					ctx.fillStyle = "#0000FF";
-					rectFill(foes[level][i]);
+	for (i = 0; i <= foes[level].length - 1; i++) {
+		for (j = min_foe_on_screen_index[i]; j <= foes[level][i].length - 1; j++) {
+			if (foes[level][i][j].hp > 0  && entity_on_screen(foes[level][i][j])) {
+				switch (foes[level][i][j].type ) {
+					case 'm': {
+						ctx.fillStyle = "#0000FF";
+						rectFill(foes[level][i][j]);
+					}
+					break;
+					case 'f' :
+					case 'F' : {
+						ctx.fillStyle = "FFFF00";
+						rectFill(foes[level][i][j]);
+					}
+					break;
+					default: {
+						ctx.fillStyle = "#FFFFFF";
+					}
 				}
-				default: {
-					ctx.fillStyle = "#FFFFFF";
-				}
+			}
+			if (!entity_on_screen(foes[level][i][j])) {
+				break;
 			}
 		}
 	}
@@ -349,12 +368,21 @@ render = function() {
 lvl_create = function() {
 	for (i = 0; i <= lvl_maps[level].length - 1; i++) {
 		min_wall_on_screen_index.push(0);
+		min_foe_on_screen_index.push(0);
 		walls[level].push([]);
+		foes[level].push([]);
 		for (j = 0; j <= lvl_maps[level][i].length - 1; j++) {
 			if ("WwB".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
 				wall = {rect: {x: j * UNIT_MAP, y: i * UNIT_MAP, width: UNIT_MAP, height: UNIT_MAP}, type: lvl_maps[level][i].charAt(j)};
-				wall.destroyable = (lvl_maps[level][i].charAt(j).toLowercase == lvl_maps[level][i].charAt(j));
+				wall.destroyable = (lvl_maps[level][i].charAt(j).toLowerCase == lvl_maps[level][i].charAt(j));
 				walls[level][i].push(wall);
+			} else if ("fFcCmnNsTb".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
+				foe = {rect: {x: j * UNIT_MAP, y: i * UNIT_MAP, width: UNIT_MAP, height: UNIT_MAP}, type: lvl_maps[level][i].charAt(j)};
+				foe.has_powup = !(lvl_maps[level][i].charAt(j).toLowerCase() == lvl_maps[level][i].charAt(j));
+				foe.hp = 5;
+				foe.speed = 10;
+				foe.earned_points = 10;
+				foes[level][i].push(foe);
 			}
 		}
 	}
@@ -367,7 +395,7 @@ collides = function(a, b) {
 collidesWall = function(entity, walls) {
 	
 	for (i = 0; i <= walls[level].length - 1; i++) {
-		while (pos_on_map > walls[level][i][min_wall_on_screen_index[i]].x + walls[level][i][min_wall_on_screen_index[i]].width) {
+		while (pos_on_map > walls[level][i][min_wall_on_screen_index[i]].rect.x + walls[level][i][min_wall_on_screen_index[i]].rect.width) {
 			min_wall_on_screen_index[i]++;
 		}
 		
