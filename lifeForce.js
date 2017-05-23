@@ -122,7 +122,6 @@ game = function() {
 }
 
 update = function(d) {
-	
 	dt = d - old;
 	old = d;
 	delta = dt * space_ship.speed;
@@ -130,6 +129,38 @@ update = function(d) {
 	
 	pos_on_map += delta_scrolling;
 	
+	spaceShipMove(space_ship, arrow, delta, unit_vector);
+	
+	if (space_ship.weapon.until_shot > 0) {
+		space_ship.weapon.until_shot--;
+	}
+
+	bulletsMove(bullets, delta_scrolling, dt, unit_vector);
+	
+	foesUpdate(foes[level], powups, space_ship, dt, unit_vector);
+	
+	for (var i = 0; i <= powups.length - 1; i++) {
+		if (collides(space_ship, powups[i]) && powups[i].exists) {
+			powups[i].exists = false;
+			eligible_powup++;
+			eligible_powup %= POWUP_CHOICE;
+		}
+	}
+	
+	if (collidesWall(space_ship, bullets, walls) && !space_ship.invulnerability) {
+		life_lost();
+	}
+
+	if (space_ship.invulnerability_timer > 0) {
+		space_ship.invulnerability_timer--;
+	}
+	
+	if (space_ship.invulnerability_timer == 0) {
+		space_ship.invulnerability = false;
+	}
+}
+
+spaceShipMove = function(space_ship, arrow, delta, unit_vector) {
 	space_ship.rect.x += delta_scrolling * unit_vector[0];
 	space_ship.rect.y += delta_scrolling * unit_vector[1];
 	
@@ -157,12 +188,10 @@ update = function(d) {
 			space_ship.rect.y = pos_on_map * unit_vector[1];
 		}
 	}
-	
-	if (space_ship.weapon.until_shot > 0) {
-		space_ship.weapon.until_shot--;
-	}
-	
-	for (var i = 0; i <= bullets.length - 1; i++) {
+}
+
+bulletsMove = function(bullets, delta_scrolling, dt, unit_vector) {
+		for (var i = 0; i <= bullets.length - 1; i++) {
 		if (bullets[i].exists) {
 			bullets[i].rect.x += bullets[i].dir.x * (dt * bullets[i].speed) + delta_scrolling * unit_vector[0];
 			bullets[i].rect.y += bullets[i].dir.y * (dt * bullets[i].speed) + delta_scrolling * unit_vector[1];
@@ -176,30 +205,32 @@ update = function(d) {
 			} 
 		}
 	}
-	
-	for (var i = 0; i <= foes[level].length - 1; i++) {
-		if (foes[level][i].hp > 0 && entity_on_screen(foes[level][i])) { 
-			switch (foes[level][i].type.toLowerCase()) {
+}
+
+foesUpdate = function(foes, powups, space_ship, dt, unit_vector) {
+	for (var i = 0; i <= foes.length - 1; i++) {
+		if (foes[i].hp > 0 && entity_on_screen(foes[i])) { 
+			switch (foes[i].type.toLowerCase()) {
 				case 'c': {
-					foes[level][i].rect.x -= dt * foes[level][i].speed;
-					if (collidesWall(foes[level][i], walls)) {
-						foes[level][i].rect.x += dt * foes[level][i].speed;
-						foes[level][i].rect.y += foes[level][i].rect.y >= HEIGHT / 2 ? dt * foes[level][i].speed : - dt * foes[level][i].speed;   
+					foes[i].rect.x -= dt * foes[i].speed;
+					if (foeCollidesWall(foes[i], walls)) {
+						foes[i].rect.x += dt * foes[i].speed;
+						foes[i].rect.y += foes[i].rect.y >= HEIGHT / 2 ? dt * foes[i].speed : - dt * foes[i].speed;   
 					}
 				}
 				default: 
 			}
 
 			for (var j = 0; j <= bullets.length - 1; j++) {
-				if (collides(bullets[j], foes[level][i]) && bullets[j].friend_bul) {
-					foes[level][i].hp -= bullets[j].power;
+				if (collides(bullets[j], foes[i]) && bullets[j].friend_bul) {
+					foes[i].hp -= bullets[j].power;
 					reset_bullet(bullets[j]);
-					if (foes[level][i].has_powup && foes[level][i].hp <= 0) {
+					if (foes[i].has_powup && foes[i].hp <= 0) {
 						for (var k = 0; k <= powups.length - 1; k++) {
 							if (!powups[k].exists) {
 								powups[k].exists = true;
-								powups[k].rect.x = foes[level][i].rect.x;
-								powups[k].rect.y = foes[level][i].rect.y;
+								powups[k].rect.x = foes[i].rect.x;
+								powups[k].rect.y = foes[i].rect.y;
 								break;
 							}
 						}
@@ -207,35 +238,15 @@ update = function(d) {
 				}
 			}
 			
-			if (!(space_ship.invulnerability) && collides(space_ship, foes[level][i])) {
+			if (!(space_ship.invulnerability) && collides(space_ship, foes[i])) {
 				if (space_ship.force) {
 					space_ship.force = false;
-					space_ship.rect.x = foes[level][i].rect.x - space_ship.rect.width - 5;
+					space_ship.rect.x = foes[i].rect.x - space_ship.rect.width - 5;
 				} else {
 					life_lost()
 				}
 			}
 		}
-	}
-	
-	for (var i = 0; i <= powups.length - 1; i++) {
-		if (collides(space_ship, powups[i]) && powups[i].exists) {
-			powups[i].exists = false;
-			eligible_powup++;
-			eligible_powup %= POWUP_CHOICE;
-		}
-	}
-	
-	if (collidesWall(space_ship, walls) && !space_ship.invulnerability) {
-		life_lost();
-	}
-
-	if (space_ship.invulnerability_timer > 0) {
-		space_ship.invulnerability_timer--;
-	}
-	
-	if (space_ship.invulnerability_timer == 0) {
-		space_ship.invulnerability = false;
 	}
 }
 
@@ -347,7 +358,7 @@ collides = function(a, b) {
 	return a.rect.x < b.rect.x + b.rect.width && a.rect.x + a.rect.width > b.rect.x && a.rect.y < b.rect.y + b.rect.height && a.rect.height + a.rect.y > b.rect.y;
 }
 
-collidesWall = function(entity, walls) {
+collidesWall = function(entity, bullets, walls) {
 	var has_collided = false;
 	for (var i = 0; i <= walls[level].length - 1; i++) {
 		while (pos_on_map > walls[level][i][min_wall_on_screen_index[i]].rect.x + walls[level][i][min_wall_on_screen_index[i]].rect.width) {
@@ -379,6 +390,25 @@ collidesWall = function(entity, walls) {
 	return has_collided;
 }
 
+foeCollidesWall = function(foe, walls) {
+	var has_collided = false;
+	for (var i = 0; i <= walls[level].length - 1; i++) {
+		while (pos_on_map > walls[level][i][min_wall_on_screen_index[i]].rect.x + walls[level][i][min_wall_on_screen_index[i]].rect.width) {
+			min_wall_on_screen_index[i]++;
+		}
+		
+		for (var j = min_wall_on_screen_index[i]; j <= walls[level][i].length - 1; j++) {
+			if (!entity_on_screen(walls[level][i][j])) {
+				break;
+			}
+			
+			
+			if (collides(foe, walls[level][i][j])) {
+				has_collided = true;
+			}
+		}
+	}
+}
 rectFill = function(a) {
 	ctx.fillRect(a.rect.x - pos_on_map * unit_vector[0], a.rect.y - pos_on_map * unit_vector[1], a.rect.width, a.rect.height);
 }
