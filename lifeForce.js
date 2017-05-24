@@ -29,6 +29,7 @@ var delta;
 var delta_scrolling;
 
 var arrow = {up: false, right: false, down: false, left: false};
+var shoot = false;
 
 var rect = {x: -1, y: -1, width: 0, height: 0};
 var dir = {x: 0, y: 0};
@@ -129,6 +130,10 @@ update = function(d) {
 	
 	pos_on_map += delta_scrolling;
 	
+	if (shoot) {
+		playerShoot();
+	}
+	
 	spaceShipMove(space_ship, arrow, delta, unit_vector);
 	
 	if (space_ship.weapon.until_shot > 0) {
@@ -158,6 +163,7 @@ update = function(d) {
 	if (space_ship.invulnerability_timer == 0) {
 		space_ship.invulnerability = false;
 	}
+	
 }
 
 spaceShipMove = function(space_ship, arrow, delta, unit_vector) {
@@ -589,7 +595,7 @@ keyPress = function(e) {
 			arrow.down = true;
 			break;
 		case 32 :
-			playerShoot();
+			shoot = true;
 			break;
 		case 13 :
 			powup_activ();
@@ -611,6 +617,8 @@ keyRelease = function(e) {
 		case 40 :
 			arrow.down = false;
 			break;
+		case 32 :
+			shoot = false;
 	}
 }
 
