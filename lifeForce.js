@@ -37,11 +37,12 @@ var powups = [];
 var bullet = {rect: {}, dir: {}, exists: false, power: 0, speed: 0, friend_bul: false, sprite: ""};
 var bullets = [];
 var weapon = {until_shot: 0, delay: 0, bullet: {}};
-var foe = {rect: {}, type: ' ', shooting: false, weapon: {}, has_powup: false, speed: 0, hp: 0, earned_points: 0, sprite: ""};
+var foe = {rect: {}, type: ' ', shooting: false, weapon: {}, has_powup: false, speed: 0, hp: 0, earned_points: 0};
 var foes = [[]];
 var space_ship = {rect: {}, speed: 0, weapon: {}, lvl_weapon: 0, missile: false, ripple: false, laser: false, force: false, invulnerability: false, invulnerability_timer: 0, sprite: ""};
-var wall = {rect: {}, type: ' ', destroyable: false, sprite: "", destroyed: false};
+var wall = {rect: {}, type: ' ', destroyable: false, destroyed: false};
 var walls = [[]];
+var sprites = {f: "img/foe_f.png", F: "img/foeF.png", W: "img/wallW.png", w: "img/wall_w.png", m: "img/foe_m.png", M: "img/foeM.png", B: "img/wallB.png", b: "img/foe_b.png", N: "img/foeN.png", n: "img/foe_n.png", c: "img/foe_c.png", C: "img/foeC.png", T: "img/foeT.png", s: "img/foe_s.png"};
 var min_wall_on_screen_index = [];
 var lvl_maps = [];
 var victory = false;
@@ -100,6 +101,15 @@ init = function() {
 		powup = {rect: {x: 0, y: 0, height: 10, width: 10}, exists: false};
 		powups[i] = powup;
 	}
+	
+	var img;
+	for (chara in sprites) {
+		img = new Image();
+		img.src = sprites[chara];
+		sprites[chara] = img;
+	}
+	console.log(sprites);
+	console.log(sprites['f']);
 	
 	space_ship.rect = {x: (width / 2 - 20) * - unit_vector[1] + 20 * unit_vector[0], y: (height / 2 - 10) * unit_vector[0] + (height - 40) * - unit_vector[1] , width: 40, height: 20};
 	space_ship.speed = 0.25;
@@ -250,7 +260,8 @@ foesUpdate = function(foes, powups, space_ship, dt, unit_vector) {
 			if (!(space_ship.invulnerability) && collides(space_ship, foes[i])) {
 				if (space_ship.force) {
 					space_ship.force = false;
-					space_ship.rect.x = foes[i].rect.x - space_ship.rect.width - 5;
+					space_ship.rect.x = (foes[i].rect.x - space_ship.rect.width - 30) * unit_vector[0] + space_ship.rect.x * unit_vector[1];
+					space_ship.rect.y = space_ship.rect.y * unit_vector[0] + (foes[i].rect.y - space_ship.rect.height - 30) * unit_vector[1];
 				} else {
 					life_lost()
 				}
@@ -268,6 +279,37 @@ foesUpdate = function(foes, powups, space_ship, dt, unit_vector) {
 render = function() {
 	ctx.clearRect(0, 0, ctx.width, ctx.height);
 	
+	showBullets(bullets);
+	
+	showPowups(powups);
+	
+	showFoes(foes[level]);
+	
+	showWalls(walls[level]);
+	
+	showSpace_ship(space_ship);
+	
+	ctx.fillStyle = "#000000";
+	ctx.fillRect(0, height, width, 100);
+	
+	powup_choice_render();
+	ctx.strokeStyle = "#FFFFFF";
+	for (i = 0; i <= POWUP_CHOICE - 1; i++) {
+		ctx.strokeRect(i * 25, ctx.height - 75, 20, 5);
+	}
+	
+	if (!in_play && !victory) {
+		ctx.font = "30px Arial";
+		ctx.fillText("Game Over, you lose !", width / 2 - 100, height / 2);
+	}
+	
+	if (victory) {
+		ctx.font = "30px Arial";
+		ctx.fillText("Congratulations, you won !", width / 2 - 100, height / 2);
+	}
+}
+
+showBullets = function(bullets) {
 	for (var i = 0; i <= bullets.length - 1; i++) {
 		if (bullets[i].exists) {
 			if (bullets[i].friend_bul) {
@@ -277,26 +319,33 @@ render = function() {
 					ctx.fillStyle = "#FF0000";
 				}
 			}
-			rectFill(bullets[i]);
+		rectFill(bullets[i]);
 		}
 	}
-	
+}
+
+showPowups = function(powups) {
 	for (var i = 0; i <= powups.length - 1; i++) {
 		ctx.fillStyle = "#f49e42";
 		if (powups[i].exists) {
 			rectFill(powups[i]);
 		}
 	}
-	
-	for (i = 0; i <= foes[0].length - 1; i++) {
-		if (foes[level][i].hp > 0  && entity_on_screen(foes[level][i])) {
-			ctx.drawImage(foes[level][i].sprite, foes[level][i].rect.x - pos_on_map * unit_vector[0], foes[level][i].rect.y - pos_on_map * unit_vector[1], foes[level][i].rect.width, foes[level][i].rect.height);
+}
+
+showFoes = function(foes) {
+	for (i = 0; i <= foes.length - 1; i++) {
+		if (foes[i].hp > 0  && entity_on_screen(foes[i])) {
+			console.log(foes[i].type);
+			ctx.drawImage(sprites[foes[i].type], foes[i].rect.x - pos_on_map * unit_vector[0], foes[i].rect.y - pos_on_map * unit_vector[1], foes[i].rect.width, foes[i].rect.height);
 		}
-	}
-	
-	for (var i = 0; i <= walls[level].length - 1; i++) {
-		for (var j = min_wall_on_screen_index[i]; j <= walls[level][i].length - 1; j++) {
-			if (!entity_on_screen(walls[level][i][j])) { 
+	}	
+}
+
+showWalls = function(walls) {
+	for (var i = 0; i <= walls.length - 1; i++) {
+		for (var j = min_wall_on_screen_index[i]; j <= walls[i].length - 1; j++) {
+			if (!entity_on_screen(walls[i][j])) { 
 				break;
 			}
 			
@@ -320,12 +369,14 @@ render = function() {
 				}
 			} */
 			
-			if (!walls[level][i][j].destroyed) {
-				ctx.drawImage(walls[level][i][j].sprite, walls[level][i][j].rect.x - pos_on_map * unit_vector[0], walls[level][i][j].rect.y - pos_on_map * unit_vector[1], walls[level][i][j].rect.width, walls[level][i][j].rect.height);
+			if (!walls[i][j].destroyed) {
+				ctx.drawImage(sprites[walls[i][j].type], walls[i][j].rect.x - pos_on_map * unit_vector[0], walls[i][j].rect.y - pos_on_map * unit_vector[1], walls[i][j].rect.width, walls[i][j].rect.height);
 			}
 		}	
-	}
-	
+	}	
+}
+
+showSpace_ship = function(space_ship) {
 	if (space_ship.invulnerability && (space_ship.invulnerability_timer % 4 == 1 || space_ship.invulnerability_timer % 4 == 2)) {
 		ctx.fillStyle = "#FFFFFF";
 		rectFill(space_ship);
@@ -335,26 +386,7 @@ render = function() {
 	
 	if (space_ship.force) {
 		ctx.strokeStyle = "#42ebf4"
-		ctx.strokeRect(space_ship.rect.x, space_ship.rect.y, space_ship.rect.width, space_ship.rect.height);
-	}
-	
-	ctx.fillStyle = "#000000";
-	ctx.fillRect(0, height, width, 100);
-	
-	powup_choice_render();
-	ctx.strokeStyle = "#FFFFFF";
-	for (i = 0; i <= POWUP_CHOICE - 1; i++) {
-		ctx.strokeRect(i * 25, ctx.height - 75, 20, 5);
-	}
-	
-	if (!in_play && !victory) {
-		ctx.font = "30px Arial";
-		ctx.fillText("Game Over, you lose !", width / 2 - 100, height / 2);
-	}
-	
-	if (victory) {
-		ctx.font = "30px Arial";
-		ctx.fillText("Congratulations, you won !", width / 2 - 100, height / 2);
+		ctx.strokeRect(space_ship.rect.x - 1, space_ship.rect.y - 1, space_ship.rect.width + 1, space_ship.rect.height + 1);
 	}
 }
 
@@ -366,29 +398,15 @@ lvl_create = function() {
 			if ("WwB".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
 				wall = {rect: {x: j * UNIT_MAP, y: i * UNIT_MAP, width: UNIT_MAP, height: UNIT_MAP}, type: lvl_maps[level][i].charAt(j)};
 				wall.destroyable = (lvl_maps[level][i].charAt(j).toLowerCase() === lvl_maps[level][i].charAt(j));
-				var img = new Image();
-				if (wall.destroyable) {
-					img.src = "img/wall_" + wall.type + ".png";
-				} else {
-					img.src = "img/wall" + wall.type + ".png";
-				}
-				wall.sprite = img;
 				wall.destroyed = false;
 				walls[level][i].push(wall);
 			
-			} else if ("fFcCmnNsTb".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
+			} else if ("fFcCMmnNsTb".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
 				foe = {rect: {x: j * UNIT_MAP, y: i * UNIT_MAP, width: UNIT_MAP, height: UNIT_MAP}, type: lvl_maps[level][i].charAt(j)};
 				foe.has_powup = !(lvl_maps[level][i].charAt(j).toLowerCase() === lvl_maps[level][i].charAt(j));
 				foe.hp = foe.has_powup ? 3 : 1;
 				foe.speed = 0.25;
 				foe.earned_points = 10;
-				var img = new Image();
-				if (foe.has_powup) {
-					img.src = "img/foe" + foe.type + ".png";
-				} else {
-					img.src = "img/foe_" + foe.type + ".png";
-				}
-				foe.sprite = img;
 				foes[level].push(foe);
 				
 			}
@@ -551,7 +569,7 @@ powup_activ = function() {
 }
 
 powup_choice_render = function() {
-	ctx.font = "30px Verdana";
+	ctx.font = "14px Verdana";
 	ctx.fillStyle = "#FFFFFF";
 	var powup_name;
 	switch (eligible_powup) {
@@ -587,6 +605,7 @@ life_lost = function() {
 		space_ship.force = false;
 		space_ship.missile = false;
 		space_ship.laser = false;
+		space_ship.ripple = false;
 		eligible_powup = 0;
 		space_ship.rect.x = (width / 2 - space_ship.rect.width / 2) * - unit_vector[1] + pos_on_map * unit_vector[0];
 		space_ship.rect.y = (height / 2 - space_ship.rect.height / 2) * unit_vector[0] + (pos_on_map - height + space_ship.rect.height) * unit_vector[1];
