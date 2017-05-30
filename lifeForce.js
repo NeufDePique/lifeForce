@@ -11,7 +11,7 @@ const UNIT_MAP = 20;
 var ctx = null;
 var cvs = null;
 
-var score;
+var score = 0;
 var lives;
 var pos_on_map = 0;
 var unit_vector = [0,0];
@@ -281,14 +281,17 @@ foesUpdate = function(foes, powups, space_ship, dt, unit_vector) {
 			for (var j = 0; j <= bullets.length - 1; j++) {
 				if (collides(bullets[j], foes[i]) && bullets[j].friend_bul) {
 					foes[i].hp -= bullets[j].power;
-					reset_bullet(bullets[j]);
-					if (foes[i].has_powup && foes[i].hp <= 0) {
-						for (var k = 0; k <= powups.length - 1; k++) {
-							if (!powups[k].exists) {
-								powups[k].exists = true;
-								powups[k].rect.x = foes[i].rect.x;
-								powups[k].rect.y = foes[i].rect.y;
-								break;
+					reset_bullet(bullets[j]);					
+					if (foes[i].hp <= 0) {
+						score += foes[i].earned_points;
+						if (foes[i].has_powup) {
+							for (var k = 0; k <= powups.length - 1; k++) {
+								if (!powups[k].exists) {
+									powups[k].exists = true;
+									powups[k].rect.x = foes[i].rect.x;
+									powups[k].rect.y = foes[i].rect.y;
+									break;
+								}
 							}
 						}
 					}
@@ -336,6 +339,9 @@ render = function() {
 		ctx.strokeRect(i * 25, ctx.height - 75, 20, 5);
 	}
 	
+	showScore();
+	
+	ctx.fillStyle = "#FF0000";
 	if (!in_play && !victory) {
 		ctx.font = "30px Arial";
 		ctx.fillText("Game Over, you lose !", width / 2 - 100, height / 2);
@@ -422,7 +428,7 @@ lvl_create = function(lvl_map, walls, foes) {
 				foe.has_powup = !(lvl_map[i].charAt(j).toLowerCase() === lvl_map[i].charAt(j));
 				foe.hp = foe.has_powup ? 3 : 1;
 				foe.speed = 0.05;
-				foe.earned_points = 10;
+				foe.earned_points = foe.hp * 10;
 				foes.push(foe);			
 			}
 		}
@@ -610,6 +616,12 @@ powup_choice_render = function() {
 	ctx.fillText(powup_name, 125, ctx.height - 75);
 	ctx.fillStyle = "#FF0000";
 	ctx.fillRect(eligible_powup * 25, ctx.height - 75, 20, 5);
+}
+
+showScore = function() {
+	ctx.font = "14px Verdana";
+	ctx.fillStyle = "#FFFFFF";
+	ctx.fillText("Score : " + score, ctx.width - 100, ctx.height - 75);
 }
 
 life_lost = function() {
