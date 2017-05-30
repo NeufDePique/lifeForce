@@ -38,10 +38,10 @@ var bullet = {rect: {}, dir: {}, exists: false, power: 0, speed: 0, friend_bul: 
 var bullets = [];
 var weapon = {until_shot: 0, delay: 0, bullet: {}};
 var foe = {rect: {}, type: ' ', shooting: false, weapon: {}, has_powup: false, speed: 0, hp: 0, earned_points: 0};
-var foes = [[]];
+var foes = [];
 var space_ship = {rect: {}, speed: 0, weapon: {}, lvl_weapon: 0, missile: false, ripple: false, laser: false, force: false, invulnerability: false, invulnerability_timer: 0, sprite: ""};
 var wall = {rect: {}, type: ' ', destroyable: false, destroyed: false};
-var walls = [[]];
+var walls = [];
 var sprites = {f: "img/foe_f.png", F: "img/foeF.png", W: "img/wallW.png", w: "img/wall_w.png", m: "img/foe_m.png", M: "img/foeM.png", B: "img/wallB.png", b: "img/foe_b.png", N: "img/foeN.png", n: "img/foe_n.png", c: "img/foe_c.png", C: "img/foeC.png", T: "img/foeT.png", s: "img/foe_s.png"};
 var min_wall_on_screen_index = [];
 var lvl_maps = [];
@@ -52,11 +52,22 @@ init = function() {
 	cvs = document.getElementById("cvs");
     ctx = cvs.getContext("2d");
 	
+	document.addEventListener("keydown", keyPress);
+	document.addEventListener("keyup", keyRelease);
+	
 	in_play = false;
 	lives = 5;
 	eligible_powup = -1;
 	vertical_oriented = false;
 	orient_update(vertical_oriented);
+	
+	for (var i = 0; i <= LVL_MAX; i++) {
+		walls.push([]);
+	}
+	
+	for (var i = 0; i <= LVL_MAX; i++) {
+		foes.push([]);
+	}
 	
 	lvl_maps.push(
 	["----------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
@@ -85,12 +96,36 @@ init = function() {
 	 "----------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWW---------WWWWWWWWWWWWWWWWWW-------------------------------------------------WWWWWWWWWWWW----------------------------------------------------------WWWWWWWWWWWWW---------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------m---------------------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB-----------------------BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW--------------w-----www---ww------w--------w----w-----------------w--------------w---w---w-----------------------------N---------N--------N----------------wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------W",
 	 "---------------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"]);
 	
-	document.addEventListener("keydown", keyPress);
-	document.addEventListener("keyup", keyRelease);
+	lvl_maps.push(
+	["WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+	 "------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------n-------n---n-----n------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------------------------W",
+	 "-------------------------------WWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------wW----------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW--------------------------------------------------------------------------------W",
+	 "--------------------------------WWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------------n---------------------ww-------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------------------------W",
+	 "---------------------------------WWWWWWWWWWWWWWWWWWWW--------------------------------------------------------ws------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW------------------------------------------------------------------------------------W",
+	 "-----------------------------------WWWWWWWWWWWWWWW---------------------------------------------------------------------------------------N---------------ws------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW--------------------------------------------------------------------------------------W",
+	 "--------------------------------------WWWWWWWWW--------------------------------------------------------------------------w--------------wW--------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------------------------------W",
+	 "------------------------------------------m-----------------------------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW--------------------------------------------------------------------------------------------W",
+	 "------------------------------------------m------------------------------------------------------------------------------------w----------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW------------------------------------------------------------------------------------------------W",
+	 "------------------------------------------m-----------------------m---m--------------------------------------------wss------------------------------------------------------------------------------m---------------------------------------------------------------------------------------------------------------W",
+	 "------------------------------------------m----------------------m--m--------------------------------------------------------------------------------ws---------------------------------------------m---------------------------------------------------------------------------------------------------------------W",
+	 "------------------------------------------m--------------------------------------------------------------------------------N------------------------------------------------------------------------m---------------------------------------------------------------------------------------------------------------W",
+	 "------------------------------------------m-------------------------------------------------------------------------------wWs-----------------------------------------------------------------------m-------------------------------------------------------------------------------------------------b-------------W",
+	 "-----------------------------------------------------------------m-m-F-F-----------------------------------ws---------------------------------ws----------------------------------------------------m---------------------------------------------------------------------------------------------------------------W",
+	 "--------------------------------------------------------------------------------------------------------------------N-------------------------------------------------------------------------------m---------------------------------------------------------------------------------------------------------------W",
+	 "-----------------------------------------------------------------F-------------------------------------------------wW-----------ws------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWW--------------------------------------------------------------------------------------------------W",
+	 "------------------------------f-f--------------------------------F-----------------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW---------------------------------------------------------------------------------------------W",
+	 "-------------------------------f-f-------------------------------f-----------------------------------------------------------------------ws------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------------------------------W",
+	 "-----------------------------------------------------------------F---------------------------------------------w-----------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------------------------------W",
+	 "-----------------------------------------------------------------f------------------------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW----------------------------------------------------------------------------------W",
+	 "----------------------------------------------------------WWWWWWWWWWWWWW--------------------------------------------wW------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW--------------------------------------------------------------------------------W",
+	 "-------------------------------------------------------WWWWWWWWWWWWWWWWWWW-------------------------------------------n----------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-------------------------------------------------------------------------------W",
+	 "-----------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWW--------------------------------------------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW------------------------------------------------------------------------------W",
+	 "----------------------------------------------------WWWWWWWWWWWWWWWWWWWWWWWWW----------------------------------ws---------N-----N---N-----N--------------ws------WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW-----------------------------------------------------------------------------W",
+	 "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"]);
 
 	level = 0;
 	
-	lvl_create();
+	lvl_create(lvl_maps[level], walls[level], foes[level]);
 	
 	for (var i = 0; i <= 49; i++) {
 		bullet = {rect: {x: 0, y: 0, width: 5, height: 5},dir: {x: -1, y: 0}, exists: false, power: 0, speed: 0, friend_bul: false};
@@ -108,10 +143,8 @@ init = function() {
 		img.src = sprites[chara];
 		sprites[chara] = img;
 	}
-	console.log(sprites);
-	console.log(sprites['f']);
 	
-	space_ship.rect = {x: (width / 2 - 20) * - unit_vector[1] + 20 * unit_vector[0], y: (height / 2 - 10) * unit_vector[0] + (height - 40) * - unit_vector[1] , width: 40, height: 20};
+	space_ship.rect = {x: (width / 2 - 20) * - unit_vector[1] + 20 * unit_vector[0], y: (height / 2 - 10) * unit_vector[0] + (60 - height) * unit_vector[1] , width: 40 * unit_vector[0] + 18 * - unit_vector[1], height: 18 * unit_vector[0] + 40 * - unit_vector[1]};
 	space_ship.speed = 0.25;
 	space_ship.weapon = {until_shot: 0, delay: 15, bullet: {rect:{}, exists: false, power: 1, speed: 0.60, friend_bul: true}};
 	var img = new Image();
@@ -124,7 +157,7 @@ init = function() {
 menu = function() {
 	ctx.font = "30px Arial";
 	ctx.fillStyle = "#FF0000";
-	ctx.fillText("Press enter to start a new game", width / 2 - 100, height / 2);
+	ctx.fillText("Press enter to start a new game", width / 2 - 200, height / 2);
 }
 
 game = function() {
@@ -166,7 +199,7 @@ update = function(d) {
 		}
 	}
 	
-	if (collidesWall(space_ship, bullets, walls) && !space_ship.invulnerability) {
+	if (collidesWall(space_ship, bullets, walls[level]) && !space_ship.invulnerability) {
 		life_lost();
 	}
 
@@ -238,6 +271,11 @@ foesUpdate = function(foes, powups, space_ship, dt, unit_vector) {
 						foes[i].rect.y += foes[i].rect.y >= HEIGHT / 2 ? dt * foes[i].speed : - dt * foes[i].speed;   
 					}
 				} break;
+				
+				case 'f': {
+					foes[i].rect.x -= dt * foes[i].speed * unit_vector[0];
+					foes[i].rect.y -= dt * foes[i].speed * unit_vector[1];
+				}
 			}
 
 			for (var j = 0; j <= bullets.length - 1; j++) {
@@ -336,7 +374,6 @@ showPowups = function(powups) {
 showFoes = function(foes) {
 	for (i = 0; i <= foes.length - 1; i++) {
 		if (foes[i].hp > 0  && entity_on_screen(foes[i])) {
-			console.log(foes[i].type);
 			ctx.drawImage(sprites[foes[i].type], foes[i].rect.x - pos_on_map * unit_vector[0], foes[i].rect.y - pos_on_map * unit_vector[1], foes[i].rect.width, foes[i].rect.height);
 		}
 	}	
@@ -345,29 +382,9 @@ showFoes = function(foes) {
 showWalls = function(walls) {
 	for (var i = 0; i <= walls.length - 1; i++) {
 		for (var j = min_wall_on_screen_index[i]; j <= walls[i].length - 1; j++) {
-			if (!entity_on_screen(walls[i][j])) { 
+			if (!entity_on_screen(walls[i][j])) {
 				break;
 			}
-			
-			/* if (!walls[level][i][j].destroyed) {
-				switch (walls[level][i][j].type) {
-					case 'w': {
-						ctx.fillStyle = "#d854a1";
-						rectFill(walls[level][i][j]);
-					} break;
-					case 'W': {
-						ctx.fillStyle = "#f49e42";
-						rectFill(walls[level][i][j]);
-					} break;
-					case 'B': {
-						ctx.fillStyle = "#f49e42";
-						rectFill(walls[level][i][j]);
-					} break;
-					default: {
-						ctx.fillStyle = "#FFFFFF";
-					}
-				}
-			} */
 			
 			if (!walls[i][j].destroyed) {
 				ctx.drawImage(sprites[walls[i][j].type], walls[i][j].rect.x - pos_on_map * unit_vector[0], walls[i][j].rect.y - pos_on_map * unit_vector[1], walls[i][j].rect.width, walls[i][j].rect.height);
@@ -390,25 +407,23 @@ showSpace_ship = function(space_ship) {
 	}
 }
 
-lvl_create = function() {
-	for (var i = 0; i <= lvl_maps[level].length - 1; i++) {
+lvl_create = function(lvl_map, walls, foes) {
+	for (var i = 0; i <= lvl_map.length - 1; i++) {
 		min_wall_on_screen_index.push(0);
-		walls[level].push([]);
-		for (var j = 0; j <= lvl_maps[level][i].length - 1; j++) {
-			if ("WwB".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
-				wall = {rect: {x: j * UNIT_MAP, y: i * UNIT_MAP, width: UNIT_MAP, height: UNIT_MAP}, type: lvl_maps[level][i].charAt(j)};
-				wall.destroyable = (lvl_maps[level][i].charAt(j).toLowerCase() === lvl_maps[level][i].charAt(j));
+		walls.push([]);
+		for (var j = 0; j <= lvl_map[i].length - 1; j++) {
+			if ("WwB".indexOf(lvl_map[i].charAt(j)) > -1) {
+				wall = {rect: {x: (j * UNIT_MAP) * unit_vector[0] + (i * UNIT_MAP) * - unit_vector[1], y: (i * UNIT_MAP) * unit_vector[0] + (j * UNIT_MAP) * unit_vector[1], width: UNIT_MAP, height: UNIT_MAP}, type: lvl_map[i].charAt(j)};
+				wall.destroyable = (lvl_map[i].charAt(j).toLowerCase() === lvl_map[i].charAt(j));
 				wall.destroyed = false;
-				walls[level][i].push(wall);
-			
-			} else if ("fFcCMmnNsTb".indexOf(lvl_maps[level][i].charAt(j)) > -1) {
-				foe = {rect: {x: j * UNIT_MAP, y: i * UNIT_MAP, width: UNIT_MAP, height: UNIT_MAP}, type: lvl_maps[level][i].charAt(j)};
-				foe.has_powup = !(lvl_maps[level][i].charAt(j).toLowerCase() === lvl_maps[level][i].charAt(j));
+				walls[i].push(wall);
+			} else if ("fFcCMmnNsTb".indexOf(lvl_map[i].charAt(j)) > -1) {
+				foe = {rect: {x: (j * UNIT_MAP) * unit_vector[0] + (i * UNIT_MAP) * - unit_vector[1], y: (i * UNIT_MAP) * unit_vector[0] + (j * UNIT_MAP) * unit_vector[1], width: UNIT_MAP, height: UNIT_MAP}, type: lvl_map[i].charAt(j)};
+				foe.has_powup = !(lvl_map[i].charAt(j).toLowerCase() === lvl_map[i].charAt(j));
 				foe.hp = foe.has_powup ? 3 : 1;
-				foe.speed = 0.25;
+				foe.speed = 0.05;
 				foe.earned_points = 10;
-				foes[level].push(foe);
-				
+				foes.push(foe);			
 			}
 		}
 	}
@@ -420,27 +435,27 @@ collides = function(a, b) {
 
 collidesWall = function(space_ship, bullets, walls) {
 	var has_collided_space_ship = false;
-	for (var i = 0; i <= walls[level].length - 1; i++) {
-		while (pos_on_map > walls[level][i][min_wall_on_screen_index[i]].rect.x + walls[level][i][min_wall_on_screen_index[i]].rect.width) {
+	for (var i = 0; i <= walls.length - 1; i++) {
+		while (pos_on_map > (walls[i][min_wall_on_screen_index[i]].rect.x + walls[i][min_wall_on_screen_index[i]].rect.width) * unit_vector[0] + (walls[i][min_wall_on_screen_index[i]].rect.y + walls[i][min_wall_on_screen_index[i]].rect.height - height) * unit_vector[1]) {
 			min_wall_on_screen_index[i]++;
 		}
 		
-		for (var j = min_wall_on_screen_index[i]; j <= walls[level][i].length - 1; j++) {
-			if (!entity_on_screen(walls[level][i][j])) {
+		for (var j = min_wall_on_screen_index[i]; j <= walls[i].length - 1; j++) {
+			if (!entity_on_screen(walls[i][j])) {
 				break;
 			}
 			
 			
-			if (collides(space_ship, walls[level][i][j]) && !walls[level][i][j].destroyed) {
+			if (collides(space_ship, walls[i][j]) && !walls[i][j].destroyed) {
 				has_collided_space_ship = true;
 			}
 
 			
 			for (k = 0; k <= bullets.length - 1; k++) {
-				if (bullets[k].exists && collides(bullets[k], walls[level][i][j]) && !walls[level][i][j].destroyed) {
+				if (bullets[k].exists && collides(bullets[k], walls[i][j]) && !walls[i][j].destroyed) {
 					reset_bullet(bullets[k]);
-					if (walls[level][i][j].destroyable) {
-						walls[level][i][j].destroyed = true;
+					if (walls[i][j].destroyable) {
+						walls[i][j].destroyed = true;
 					}
 				}
 			}
@@ -608,7 +623,7 @@ life_lost = function() {
 		space_ship.ripple = false;
 		eligible_powup = 0;
 		space_ship.rect.x = (width / 2 - space_ship.rect.width / 2) * - unit_vector[1] + pos_on_map * unit_vector[0];
-		space_ship.rect.y = (height / 2 - space_ship.rect.height / 2) * unit_vector[0] + (pos_on_map - height + space_ship.rect.height) * unit_vector[1];
+		space_ship.rect.y = (height / 2 - space_ship.rect.height / 2) * unit_vector[0] + (pos_on_map - height + space_ship.rect.height + 40) * unit_vector[1];
 	} else {
 		in_play = false;
 	}
@@ -624,8 +639,8 @@ reset_bullet = function(bullet) {
 }
 
 entity_on_screen = function (entity) {
-	return (entity.rect.x + entity.rect.width >= pos_on_map * unit_vector[0] && entity.rect.x <= pos_on_map * unit_vector[0] + width && entity.rect.y >= pos_on_map * unit_vector[1] && entity.rect.y - height <= pos_on_map * unit_vector[1] + height);
-}
+	return (entity.rect.x + entity.rect.width >= pos_on_map * unit_vector[0] && entity.rect.x <= pos_on_map * unit_vector[0] + width && entity.rect.y + entity.rect.height >= pos_on_map * unit_vector[1] && entity.rect.y <= pos_on_map * unit_vector[1] + height);
+}													
 
 keyPress = function(e) {
 	switch (e.keyCode) {
