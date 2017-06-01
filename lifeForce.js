@@ -1,3 +1,6 @@
+//AVENIA Adrien et MARCHE Claire
+//L1 CMI Info 
+
 const LVL_MAX = 1;
 const PRIMARY_AXIS_LEN = 700;
 const SECONDARY_AXIS_LEN = 500;
@@ -214,6 +217,8 @@ update = function(d) {
 		}
 	}
 	
+	//appel de collidesWall, qui vérifie dans un même temps la colision du joueur avec un mur, et celle de n'importe quel tir.
+	//attention, le bonus Force protège simplement d'un choc avec un ennemi, et non un mur, nous ne vérifions donc pas si Force est actif ou non.
 	if (collidesWall(space_ship, bullets, walls[level]) && !space_ship.invulnerability) {
 		life_lost();
 	}
@@ -230,7 +235,7 @@ update = function(d) {
 /*gestion du mouvement du vaisseau
 paramètres : space_ship le vaisseau à faire bouger
 			 arrow la récapitulation des touches pressées récupérées par les évènements
-			 delta permet la synchronisation de tous les éléments
+			 delta permet la synchronisation du mouvement de tous les éléments
 			 unit_vector sert à définir l'orientation du niveau et permet le déplacement peu importe celle-ci
 */
 spaceShipMove = function(space_ship, arrow, delta, unit_vector) {
@@ -333,7 +338,7 @@ foesUpdate = function(foes, powups, space_ship, dt, unit_vector) {
 				}
 			}
 			
-			/*si il y a collision avec un ennemi lorsque le vaisseau n'est pas invulnérable
+			/*si il y a collision avec un ennemi lorsque le vaisseau n'est pas invulnérable,
 			le vaisseau réapparait plus loin de l'ennemi si force est actif
 			sinon il perd une vie*/
 			if (!(space_ship.invulnerability) && collides(space_ship, foes[i])) {
@@ -470,7 +475,7 @@ showSpace_ship = function(space_ship) {
 }
 
 /*création du niveau en fonction de la map stockée
-paramètres : lvl_map tableau des maps de tous les niveaux sous forme de tableaux de chaînes de caractères
+paramètres : lvl_map tableau de chaînes de caractères représentant la map du niveau que l'on veut créer
 			 walls tableau des murs auquel on ajoute les murs définis sur la map avec leurs différentes caractéristiques
 			 foes tableau des ennemis auquel on ajoute les ennemis définis sur la map avec leurs différentes caractéristiques
 */
@@ -480,6 +485,7 @@ lvl_create = function(lvl_map, walls, foes) {
 		walls.push([]);
 		for (var j = 0; j <= lvl_map[i].length - 1; j++) {
 			if ("WwB".indexOf(lvl_map[i].charAt(j)) > -1) {
+				//la position de l'entité dépend du sens du scrolling : sa coordonnée sur l'axe de scrolling dépend de la position sur la ligne que l'on parcourt, pendant que sa coordonnée sur l'axe secondaire dépend uniquement de la ligne en cours.
 				wall = {rect: {x: (j * UNIT_MAP) * unit_vector[0] + (i * UNIT_MAP) * - unit_vector[1], y: (i * UNIT_MAP) * unit_vector[0] + (j * UNIT_MAP) * unit_vector[1], width: UNIT_MAP, height: UNIT_MAP}, type: lvl_map[i].charAt(j)};
 				wall.destroyable = (lvl_map[i].charAt(j).toLowerCase() === lvl_map[i].charAt(j));
 				wall.destroyed = false;
@@ -648,7 +654,7 @@ playerShoot = function() {
 /*effectue les modifications nécessaires en fonction de l'orientation du niveau
 modifie le vecteur unitaire permettant le déplacement (une des composantes du vecteur unitaire est toujours nulle, ce qui permet une formule de déplacement générale)
 modifie la taille du canvas en fonction de la direction et modifie la taille du contexte en fonction du canvas
-paramètre : vertical oriented si le niveau est vertical
+paramètre : vertical oriented permet d'indiquer l'orientation du niveau
 */
 orient_update = function(vertical_oriented) {
 	if (vertical_oriented) {
@@ -658,7 +664,7 @@ orient_update = function(vertical_oriented) {
 		height = PRIMARY_AXIS_LEN;
 		cvs.width += width;
 		cvs.height += height;
-		img_file = "img/vertical/";
+		img_file = "img/vertical/"; //permet d'indiquer le sous-dossier image à utiliser, les sprites des entités pouvant changer en fonction de l'orientation
 	} else {
 		unit_vector[0] = 1;
 		unit_vector[1] = 0;
@@ -768,7 +774,8 @@ reset_bullet = function(bullet) {
 	bullet.friend_bul = false;
 }
 
-/*teste si une entité physique (avec un rect) est affichée sur l'écran dans l'état actuel du scrolling
+/*teste si une entité physique (donc possèdant un rect) est affichée sur l'écran dans l'état actuel du scrolling
+permet de simplifier l'affichage des entités en affichant que celles nécessaires, ceci afin d'éviter un ralentissement du jeu
 paramètres : entity l'entité à tester
 */
 entity_on_screen = function (entity) {
